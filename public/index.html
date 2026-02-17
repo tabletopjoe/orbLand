@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AstroCurse</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    <canvas id="canvas"></canvas>
+    <div class="sidebar-wrapper">
+      <div id="selection-indicator" class="selection-indicator">Selected: —</div>
+      <aside id="sidebar" class="control-panel">
+      <div class="selector-section">
+        <div class="selector-row">
+          <select id="sun-selector" class="selector-dropdown" aria-label="Select sun">
+            <option value="">Suns</option>
+          </select>
+          <button type="button" id="add-sun" class="add-btn" aria-label="Add sun">+</button>
+        </div>
+        <div class="selector-row">
+          <select id="planet-selector" class="selector-dropdown" aria-label="Select planet">
+            <option value="">Planets</option>
+          </select>
+          <button type="button" id="add-planet" class="add-btn" aria-label="Add planet">+</button>
+        </div>
+        <div class="selector-row">
+          <select id="moon-selector" class="selector-dropdown" aria-label="Select moon">
+            <option value="">Moons</option>
+          </select>
+          <button type="button" id="add-moon" class="add-btn" aria-label="Add moon">+</button>
+        </div>
+      </div>
+      <div id="swatch-bar" class="swatch-bar" role="group" aria-label="Color picker">
+        <!-- 18 swatches injected by JS -->
+      </div>
+      <button type="button" id="clear-selection" class="clear-btn">Clear Selection</button>
+      <button type="button" id="generate-random" class="clear-btn">Generate Random</button>
+      <div class="property-section">
+        <div id="sun-properties" class="property-group" style="display: none;">
+          <div class="control-group">
+            <label class="control-label" for="size-slider">Size</label>
+            <input type="range" id="size-slider" class="control-slider" min="4" max="60" step="2" value="12" aria-label="Size">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="x-slider">X</label>
+            <input type="range" id="x-slider" class="control-slider" min="0" max="0" step="5" value="0" aria-label="X position">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="y-slider">Y</label>
+            <input type="range" id="y-slider" class="control-slider" min="0" max="0" step="5" value="0" aria-label="Y position">
+          </div>
+        </div>
+        <div id="planet-properties" class="property-group">
+          <div class="control-group">
+            <label class="control-label" for="planet-size-slider">Size</label>
+            <input type="range" id="planet-size-slider" class="control-slider" min="4" max="60" step="2" value="12" aria-label="Planet size">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="orbit-slider">Orbit radius</label>
+            <input type="range" id="orbit-slider" class="control-slider" min="50" max="471" step="10" value="120" aria-label="Orbit radius">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="speed-slider">Orbit speed</label>
+            <input type="range" id="speed-slider" class="control-slider" min="2" max="150" step="1" value="10" aria-label="Orbit speed">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="ellipse-slider">Elliptical</label>
+            <input type="range" id="ellipse-slider" class="control-slider" min="0" max="90" step="5" value="0" aria-label="Orbit ellipticity">
+          </div>
+          <div class="control-group">
+            <label class="control-label" for="trail-slider">Orbit trail</label>
+            <input type="range" id="trail-slider" class="control-slider" min="0" max="100" step="5" value="0" aria-label="Orbit trail visibility">
+          </div>
+        </div>
+      </div>
+    </aside>
+    </div>
+  </div>
+  <script src="js/main.js"></script>
+</body>
+</html>
