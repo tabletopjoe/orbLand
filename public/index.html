@@ -12,28 +12,40 @@
     <div class="sidebar-wrapper">
       <div id="selection-indicator" class="selection-indicator">Selected: —</div>
       <aside id="sidebar" class="control-panel">
+      <div class="toggle-row">
+        <button type="button" id="design-toggle" class="add-btn design-toggle" aria-label="Toggle design controls">Hide Design</button>
+        <button type="button" id="theme-toggle" class="add-btn theme-toggle" aria-label="Toggle light/dark mode">Dark</button>
+        <span class="toggle-spacer"></span>
+      </div>
+      <div id="design-controls" class="design-controls">
       <div class="selector-section">
         <div class="selector-row">
+          <button type="button" id="sun-left-btn" class="add-btn selector-left-btn" aria-label="Apply to all suns">All</button>
           <select id="sun-selector" class="selector-dropdown" aria-label="Select sun">
             <option value="">Suns</option>
           </select>
-          <button type="button" id="add-sun" class="add-btn" aria-label="Add sun">+</button>
+          <button type="button" id="add-sun" class="add-btn selector-add-btn" aria-label="Add sun">+</button>
+          <button type="button" id="remove-sun" class="add-btn selector-remove-btn" aria-label="Remove selected sun">−</button>
         </div>
         <div class="selector-row">
+          <button type="button" id="planet-left-btn" class="add-btn selector-left-btn" aria-label="Apply to all planets around selected sun">All</button>
           <select id="planet-selector" class="selector-dropdown" aria-label="Select planet">
             <option value="">Planets</option>
           </select>
-          <button type="button" id="add-planet" class="add-btn" aria-label="Add planet">+</button>
+          <button type="button" id="add-planet" class="add-btn selector-add-btn" aria-label="Add planet">+</button>
+          <button type="button" id="remove-planet" class="add-btn selector-remove-btn" aria-label="Remove selected planet">−</button>
         </div>
         <div class="selector-row">
+          <button type="button" id="moon-left-btn" class="add-btn selector-left-btn" aria-label="Apply to all moons around selected planet">All</button>
           <select id="moon-selector" class="selector-dropdown" aria-label="Select moon">
             <option value="">Moons</option>
           </select>
-          <button type="button" id="add-moon" class="add-btn" aria-label="Add moon">+</button>
+          <button type="button" id="add-moon" class="add-btn selector-add-btn" aria-label="Add moon">+</button>
+          <button type="button" id="remove-moon" class="add-btn selector-remove-btn" aria-label="Remove selected moon">−</button>
         </div>
       </div>
       <div id="swatch-bar" class="swatch-bar" role="group" aria-label="Color picker">
-        <!-- 18 swatches injected by JS -->
+        <!-- 6 rows × 9 shades (ROYGBV) injected by JS -->
       </div>
       <button type="button" id="clear-selection" class="clear-btn">Clear Selection</button>
       <button type="button" id="generate-random" class="clear-btn">Generate Random</button>
@@ -73,7 +85,12 @@
             <label class="control-label" for="trail-slider">Orbit trail</label>
             <input type="range" id="trail-slider" class="control-slider" min="0" max="100" step="5" value="0" aria-label="Orbit trail visibility">
           </div>
+          <div class="control-group">
+            <label class="control-label" for="trail-width-slider">Orbit trail width</label>
+            <input type="range" id="trail-width-slider" class="control-slider" min="1" max="24" step="1" value="2" aria-label="Orbit trail width">
+          </div>
         </div>
+      </div>
       </div>
     </aside>
     </div>
