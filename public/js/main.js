@@ -97,6 +97,7 @@ function initBodies() {
     orbitRadius: 120,
     orbitSpeed: 0.01,
     ellipticity: 0,
+    orbitTilt: 0,
     orbitAngle: 0,
     orbitTrail: 0,
     orbitTrailWidth: 2,
@@ -286,6 +287,19 @@ function getPlanetById(id) {
   return bodies.planets.find(p => p.id === id);
 }
 
+/** Ellipse position with optional tilt; returns {x,y} relative to orbit center */
+function ellipsePosition(orbitAngle, orbitRadius, ellipticity, orbitTilt = 0) {
+  const radiusY = orbitRadius * (1 - ellipticity / 100);
+  const u = orbitRadius * Math.cos(orbitAngle);
+  const v = radiusY * Math.sin(orbitAngle);
+  const cosT = Math.cos(orbitTilt);
+  const sinT = Math.sin(orbitTilt);
+  return {
+    x: u * cosT - v * sinT,
+    y: u * sinT + v * cosT
+  };
+}
+
 function getPlanetPosition(planet) {
   const parentSun = getSunById(planet.parentId);
   if (!parentSun) return null;
@@ -293,11 +307,8 @@ function getPlanetPosition(planet) {
   const cy = canvas.height / 2;
   const orbitCx = cx + parentSun.x;
   const orbitCy = cy + parentSun.y;
-  const radiusY = planet.orbitRadius * (1 - planet.ellipticity / 100);
-  return {
-    x: orbitCx + planet.orbitRadius * Math.cos(planet.orbitAngle),
-    y: orbitCy + radiusY * Math.sin(planet.orbitAngle)
-  };
+  const offset = ellipsePosition(planet.orbitAngle, planet.orbitRadius, planet.ellipticity, planet.orbitTilt ?? 0);
+  return { x: orbitCx + offset.x, y: orbitCy + offset.y };
 }
 
 function getMoonPosition(moon) {
@@ -309,14 +320,11 @@ function getMoonPosition(moon) {
   const cy = canvas.height / 2;
   const orbitCx = cx + parentSun.x;
   const orbitCy = cy + parentSun.y;
-  const pRadiusY = parentPlanet.orbitRadius * (1 - parentPlanet.ellipticity / 100);
-  const planetX = orbitCx + parentPlanet.orbitRadius * Math.cos(parentPlanet.orbitAngle);
-  const planetY = orbitCy + pRadiusY * Math.sin(parentPlanet.orbitAngle);
-  const radiusY = moon.orbitRadius * (1 - moon.ellipticity / 100);
-  return {
-    x: planetX + moon.orbitRadius * Math.cos(moon.orbitAngle),
-    y: planetY + radiusY * Math.sin(moon.orbitAngle)
-  };
+  const planetOffset = ellipsePosition(parentPlanet.orbitAngle, parentPlanet.orbitRadius, parentPlanet.ellipticity, parentPlanet.orbitTilt ?? 0);
+  const planetX = orbitCx + planetOffset.x;
+  const planetY = orbitCy + planetOffset.y;
+  const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt ?? 0);
+  return { x: planetX + moonOffset.x, y: planetY + moonOffset.y };
 }
 
 const SUN_EDGE_MARGIN = 50;
@@ -388,6 +396,7 @@ function addPlanet() {
     orbitRadius: baseOrbit + Math.random() * 80,
     orbitSpeed: 0.005 + Math.random() * 0.02,
     ellipticity: 0,
+    orbitTilt: 0,
     orbitAngle: Math.random() * Math.PI * 2,
     orbitTrail: 0,
     orbitTrailWidth: 2,
@@ -410,6 +419,7 @@ function addMoon() {
     orbitRadius: 30 + Math.random() * 40,
     orbitSpeed: 0.02 + Math.random() * 0.03,
     ellipticity: 0,
+    orbitTilt: 0,
     orbitAngle: Math.random() * Math.PI * 2,
     orbitTrail: 0,
     orbitTrailWidth: 2,
@@ -455,6 +465,70 @@ function removeSelectedMoon() {
   document.getElementById('moon-selector').value = '';
 }
 
+function addRandomSunWithChildren() {
+  const { width } = getCanvasDimensions();
+  const baseOrbit = Math.min(80, width * 0.15);
+  const pos = findValidSunPosition();
+  const sunId = generateId('sun');
+  bodies.suns.push({
+    id: sunId,
+    name: randomName(),
+    radius: 30 + Math.random() * 30,
+    x: pos.x,
+    y: pos.y,
+    color: randomColor()
+  });
+  const planetCount = Math.floor(Math.random() * 10);
+  for (let j = 0; j < planetCount; j++) {
+    const planetId = generateId('planet');
+    const planetColor = randomColor();
+    bodies.planets.push({
+      id: planetId,
+      name: randomName(),
+      radius: 8 + Math.random() * 20,
+      orbitRadius: baseOrbit + Math.random() * 120 + j * 25,
+      orbitSpeed: 0.003 + Math.random() * 0.03,
+        ellipticity: Math.floor(Math.random() * 19) * 5,
+        orbitTilt: Math.random() * Math.PI * 2,
+        orbitAngle: Math.random() * Math.PI * 2,
+        orbitTrail: Math.random() < 0.5 ? 100 : 0,
+      orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
+      trail: [],
+      parentId: sunId,
+      color: planetColor
+    });
+    const moonCount = Math.floor(Math.random() * 5);
+    for (let k = 0; k < moonCount; k++) {
+      const moonId = generateId('moon');
+      const moonColor = randomColor();
+      bodies.moons.push({
+        id: moonId,
+        name: randomName(),
+        radius: 4 + Math.random() * 6,
+        orbitRadius: 25 + Math.random() * 50,
+        orbitSpeed: 0.015 + Math.random() * 0.04,
+        ellipticity: Math.floor(Math.random() * 5) * 5,
+        orbitTilt: Math.random() * Math.PI * 2,
+        orbitAngle: Math.random() * Math.PI * 2,
+        orbitTrail: Math.random() < 0.5 ? 100 : 0,
+        orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
+        trail: [],
+        parentId: planetId,
+        color: moonColor
+      });
+    }
+  }
+}
+
+function refreshUIAfterBodiesChange() {
+  syncSelectors();
+  updateDropdownStyles();
+  updatePropertyVisibility();
+  updateSelectionIndicator();
+  updateApplyAllButtons();
+  updateRemoveButtons();
+}
+
 function generateRandomSystem() {
   bodies.suns = [];
   bodies.planets = [];
@@ -463,67 +537,31 @@ function generateRandomSystem() {
   selectedId = null;
   applyAllTarget = null;
 
-  const { width } = getCanvasDimensions();
-  const baseOrbit = Math.min(80, width * 0.15);
   const sunCount = 1 + Math.floor(Math.random() * 5);
-
   for (let i = 0; i < sunCount; i++) {
-    const pos = findValidSunPosition();
-    const sunId = generateId('sun');
-    bodies.suns.push({
-      id: sunId,
-      name: randomName(),
-      radius: 30 + Math.random() * 30,
-      x: pos.x,
-      y: pos.y,
-      color: randomColor()
-    });
-    const planetCount = Math.floor(Math.random() * 10);
-    for (let j = 0; j < planetCount; j++) {
-      const planetId = generateId('planet');
-      const planetColor = randomColor();
-      bodies.planets.push({
-        id: planetId,
-        name: randomName(),
-        radius: 8 + Math.random() * 20,
-        orbitRadius: baseOrbit + Math.random() * 120 + j * 25,
-        orbitSpeed: 0.003 + Math.random() * 0.03,
-        ellipticity: Math.floor(Math.random() * 19) * 5,
-        orbitAngle: Math.random() * Math.PI * 2,
-        orbitTrail: Math.random() < 0.5 ? 100 : 0,
-        orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
-        trail: [],
-        parentId: sunId,
-        color: planetColor
-      });
-      const moonCount = Math.floor(Math.random() * 5);
-      for (let k = 0; k < moonCount; k++) {
-        const moonId = generateId('moon');
-        const moonColor = randomColor();
-        bodies.moons.push({
-          id: moonId,
-          name: randomName(),
-          radius: 4 + Math.random() * 6,
-          orbitRadius: 25 + Math.random() * 50,
-          orbitSpeed: 0.015 + Math.random() * 0.04,
-          ellipticity: Math.floor(Math.random() * 5) * 5,
-          orbitAngle: Math.random() * Math.PI * 2,
-          orbitTrail: Math.random() < 0.5 ? 100 : 0,
-          orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
-          trail: [],
-          parentId: planetId,
-          color: moonColor
-        });
-      }
-    }
+    addRandomSunWithChildren();
   }
 
-  syncSelectors();
-  updateDropdownStyles();
-  updatePropertyVisibility();
-  updateSelectionIndicator();
-  updateApplyAllButtons();
-  updateRemoveButtons();
+  document.getElementById('random-controls').style.display = 'flex';
+  refreshUIAfterBodiesChange();
+}
+
+function clearGeneratedSystems() {
+  bodies.suns = [];
+  bodies.planets = [];
+  bodies.moons = [];
+  selectedType = null;
+  selectedId = null;
+  applyAllTarget = null;
+  document.getElementById('sun-selector').value = '';
+  document.getElementById('planet-selector').value = '';
+  document.getElementById('moon-selector').value = '';
+  refreshUIAfterBodiesChange();
+}
+
+function addOneRandomSun() {
+  addRandomSunWithChildren();
+  refreshUIAfterBodiesChange();
 }
 
 function drawTaperedTrail(ctx, trail, color, maxAlpha, lineWidth) {
@@ -568,9 +606,9 @@ function draw() {
     const orbitCx = cx + parentSun.x;
     const orbitCy = cy + parentSun.y;
     planet.orbitAngle += planet.orbitSpeed;
-    const radiusY = planet.orbitRadius * (1 - planet.ellipticity / 100);
-    const px = orbitCx + planet.orbitRadius * Math.cos(planet.orbitAngle);
-    const py = orbitCy + radiusY * Math.sin(planet.orbitAngle);
+    const planetOffset = ellipsePosition(planet.orbitAngle, planet.orbitRadius, planet.ellipticity, planet.orbitTilt ?? 0);
+    const px = orbitCx + planetOffset.x;
+    const py = orbitCy + planetOffset.y;
     if (planet.orbitTrail > 0) {
       planet.trail = planet.trail || [];
       planet.trail.push({ x: px, y: py });
@@ -599,13 +637,13 @@ function draw() {
     if (!parentSun) return;
     const orbitCx = cx + parentSun.x;
     const orbitCy = cy + parentSun.y;
-    const pRadiusY = parentPlanet.orbitRadius * (1 - parentPlanet.ellipticity / 100);
-    const planetX = orbitCx + parentPlanet.orbitRadius * Math.cos(parentPlanet.orbitAngle);
-    const planetY = orbitCy + pRadiusY * Math.sin(parentPlanet.orbitAngle);
+    const parentPlanetOffset = ellipsePosition(parentPlanet.orbitAngle, parentPlanet.orbitRadius, parentPlanet.ellipticity, parentPlanet.orbitTilt ?? 0);
+    const planetX = orbitCx + parentPlanetOffset.x;
+    const planetY = orbitCy + parentPlanetOffset.y;
     moon.orbitAngle += moon.orbitSpeed;
-    const radiusY = moon.orbitRadius * (1 - moon.ellipticity / 100);
-    const mx = planetX + moon.orbitRadius * Math.cos(moon.orbitAngle);
-    const my = planetY + radiusY * Math.sin(moon.orbitAngle);
+    const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt ?? 0);
+    const mx = planetX + moonOffset.x;
+    const my = planetY + moonOffset.y;
     if (moon.orbitTrail > 0) {
       moon.trail = moon.trail || [];
       moon.trail.push({ x: mx, y: my });
@@ -697,6 +735,7 @@ function syncSlidersToPlanet() {
   document.getElementById('orbit-slider').value = body.orbitRadius;
   document.getElementById('speed-slider').value = Math.round(body.orbitSpeed * 1000);
   document.getElementById('ellipse-slider').value = body.ellipticity;
+  document.getElementById('tilt-slider').value = Math.round(((body.orbitTilt ?? 0) * 180 / Math.PI + 360) % 360);
   document.getElementById('trail-slider').value = body.orbitTrail ?? 0;
   const trailWidthSlider = document.getElementById('trail-width-slider');
   const maxWidth = Math.max(1, Math.floor(body.radius * 2));
@@ -712,6 +751,7 @@ function syncSlidersToMoon() {
   document.getElementById('orbit-slider').value = moon.orbitRadius;
   document.getElementById('speed-slider').value = Math.round(moon.orbitSpeed * 1000);
   document.getElementById('ellipse-slider').value = moon.ellipticity;
+  document.getElementById('tilt-slider').value = Math.round(((moon.orbitTilt ?? 0) * 180 / Math.PI + 360) % 360);
   document.getElementById('trail-slider').value = moon.orbitTrail ?? 0;
   const trailWidthSlider = document.getElementById('trail-width-slider');
   const maxWidth = Math.max(1, Math.floor(moon.radius * 2));
@@ -736,6 +776,7 @@ function syncSlidersToFirstPlanetInGroup() {
   document.getElementById('orbit-slider').value = first.orbitRadius;
   document.getElementById('speed-slider').value = Math.round(first.orbitSpeed * 1000);
   document.getElementById('ellipse-slider').value = first.ellipticity;
+  document.getElementById('tilt-slider').value = Math.round(((first.orbitTilt ?? 0) * 180 / Math.PI + 360) % 360);
   document.getElementById('trail-slider').value = first.orbitTrail ?? 0;
   const trailWidthSlider = document.getElementById('trail-width-slider');
   const maxWidth = Math.max(1, ...bodies.planets.filter(p => p.parentId === applyAllTarget.sunId).map(p => Math.floor(p.radius * 2)));
@@ -752,6 +793,7 @@ function syncSlidersToFirstMoonInGroup() {
   document.getElementById('orbit-slider').value = first.orbitRadius;
   document.getElementById('speed-slider').value = Math.round(first.orbitSpeed * 1000);
   document.getElementById('ellipse-slider').value = first.ellipticity;
+  document.getElementById('tilt-slider').value = Math.round(((first.orbitTilt ?? 0) * 180 / Math.PI + 360) % 360);
   document.getElementById('trail-slider').value = first.orbitTrail ?? 0;
   const trailWidthSlider = document.getElementById('trail-width-slider');
   const maxWidth = Math.max(1, ...bodies.moons.filter(m => m.parentId === applyAllTarget.planetId).map(m => Math.floor(m.radius * 2)));
@@ -835,6 +877,11 @@ document.getElementById('speed-slider').addEventListener('input', (e) => {
 document.getElementById('ellipse-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);
   getOrbitalSliderTargets().forEach(body => { body.ellipticity = val; });
+});
+
+document.getElementById('tilt-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value) * Math.PI / 180;
+  getOrbitalSliderTargets().forEach(body => { body.orbitTilt = val; });
 });
 
 document.getElementById('trail-slider').addEventListener('input', (e) => {
@@ -931,6 +978,8 @@ document.getElementById('clear-selection').addEventListener('click', () => {
 });
 
 document.getElementById('generate-random').addEventListener('click', generateRandomSystem);
+document.getElementById('random-clear').addEventListener('click', clearGeneratedSystems);
+document.getElementById('random-add-one').addEventListener('click', addOneRandomSun);
 
 // Swatch bar
 function getSelectedBody() {
