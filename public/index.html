@@ -7,10 +7,13 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="top-bar">
+    <div id="selection-indicator" class="selection-indicator">Selected: —</div>
+    <button type="button" id="top-corner-btn" class="top-corner-btn" aria-label="Toggle control panel">Panel</button>
+  </div>
   <div class="app-container">
     <canvas id="canvas"></canvas>
     <div class="sidebar-wrapper">
-      <div id="selection-indicator" class="selection-indicator">Selected: —</div>
       <aside id="sidebar" class="control-panel">
       <div class="toggle-row">
         <button type="button" id="design-toggle" class="add-btn design-toggle" aria-label="Toggle design controls">Hide Design</button>

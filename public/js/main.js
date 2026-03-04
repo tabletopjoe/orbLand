@@ -1033,6 +1033,16 @@ function initDesignToggle() {
 }
 initDesignToggle();
 
+function initPanelToggle() {
+  const btn = document.getElementById('top-corner-btn');
+  const wrapper = document.querySelector('.sidebar-wrapper');
+  btn.addEventListener('click', () => {
+    const visible = wrapper.style.display !== 'none';
+    wrapper.style.display = visible ? 'none' : 'flex';
+  });
+}
+initPanelToggle();
+
 function initThemeToggle() {
   const btn = document.getElementById('theme-toggle');
   btn.addEventListener('click', () => {
