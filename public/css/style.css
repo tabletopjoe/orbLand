@@ -37,7 +37,7 @@ body.dark-mode #canvas {
 .top-corner-btn {
   width: auto;
   min-width: 24px;
-  height: 24px;
+  height: var(--control-row-height);
   flex-shrink: 0;
   padding: 0 0.4rem;
   font-size: 0.75rem;

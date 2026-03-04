@@ -55,6 +55,8 @@ let selectedAt = null;
 let applyAllTarget = null;  // { type: 'sun' } | { type: 'planet', sunId } | { type: 'moon', planetId }
 
 const SELECTION_HIGHLIGHT_DURATION = 400;
+const MAX_TRAIL_LENGTH = 80;
+const TRAIL_PROBABILITY = 0.3;
 
 function lerpColor(hex1, hex2, t) {
   const r1 = parseInt(hex1.slice(1, 3), 16), g1 = parseInt(hex1.slice(3, 5), 16), b1 = parseInt(hex1.slice(5, 7), 16);
@@ -478,7 +480,7 @@ function addRandomSunWithChildren() {
     y: pos.y,
     color: randomColor()
   });
-  const planetCount = Math.floor(Math.random() * 10);
+  const planetCount = Math.floor(Math.random() * 7);
   for (let j = 0; j < planetCount; j++) {
     const planetId = generateId('planet');
     const planetColor = randomColor();
@@ -491,13 +493,13 @@ function addRandomSunWithChildren() {
         ellipticity: Math.floor(Math.random() * 19) * 5,
         orbitTilt: Math.random() * Math.PI * 2,
         orbitAngle: Math.random() * Math.PI * 2,
-        orbitTrail: Math.random() < 0.5 ? 100 : 0,
+        orbitTrail: Math.random() < TRAIL_PROBABILITY ? 100 : 0,
       orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
       trail: [],
       parentId: sunId,
       color: planetColor
     });
-    const moonCount = Math.floor(Math.random() * 5);
+    const moonCount = Math.floor(Math.random() * 3);
     for (let k = 0; k < moonCount; k++) {
       const moonId = generateId('moon');
       const moonColor = randomColor();
@@ -510,7 +512,7 @@ function addRandomSunWithChildren() {
         ellipticity: Math.floor(Math.random() * 5) * 5,
         orbitTilt: Math.random() * Math.PI * 2,
         orbitAngle: Math.random() * Math.PI * 2,
-        orbitTrail: Math.random() < 0.5 ? 100 : 0,
+        orbitTrail: Math.random() < TRAIL_PROBABILITY ? 100 : 0,
         orbitTrailWidth: 1 + Math.floor(Math.random() * 24),
         trail: [],
         parentId: planetId,
@@ -537,7 +539,7 @@ function generateRandomSystem() {
   selectedId = null;
   applyAllTarget = null;
 
-  const sunCount = 1 + Math.floor(Math.random() * 5);
+  const sunCount = 1 + Math.floor(Math.random() * 3);
   for (let i = 0; i < sunCount; i++) {
     addRandomSunWithChildren();
   }
@@ -564,21 +566,31 @@ function addOneRandomSun() {
   refreshUIAfterBodiesChange();
 }
 
+function hexToRgba(hex, alpha) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 function drawTaperedTrail(ctx, trail, color, maxAlpha, lineWidth) {
-  ctx.strokeStyle = color;
+  const n = trail.length;
+  if (n < 2) return;
+  const x0 = trail[0].x;
+  const y0 = trail[0].y;
+  const x1 = trail[n - 1].x;
+  const y1 = trail[n - 1].y;
+  const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
+  gradient.addColorStop(0, hexToRgba(color, 0));
+  gradient.addColorStop(1, hexToRgba(color, maxAlpha));
+  ctx.strokeStyle = gradient;
   ctx.lineWidth = lineWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  const n = trail.length;
-  for (let i = 0; i < n - 1; i++) {
-    const t = (i + 1) / n;
-    ctx.globalAlpha = maxAlpha * t * t;
-    ctx.beginPath();
-    ctx.moveTo(trail[i].x, trail[i].y);
-    ctx.lineTo(trail[i + 1].x, trail[i + 1].y);
-    ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
+  ctx.beginPath();
+  ctx.moveTo(trail[0].x, trail[0].y);
+  for (let i = 1; i < n; i++) ctx.lineTo(trail[i].x, trail[i].y);
+  ctx.stroke();
 }
 
 function draw() {
@@ -612,7 +624,7 @@ function draw() {
     if (planet.orbitTrail > 0) {
       planet.trail = planet.trail || [];
       planet.trail.push({ x: px, y: py });
-      const maxLen = Math.floor((planet.orbitTrail / 100) * 150);
+      const maxLen = Math.floor((planet.orbitTrail / 100) * MAX_TRAIL_LENGTH);
       if (planet.trail.length > maxLen) planet.trail.shift();
       if (planet.trail.length > 1) {
         drawTaperedTrail(ctx, planet.trail, planet.color || TROPICAL_GREEN, planet.orbitTrail / 100, Math.max(1, Math.min(planet.radius * 2, planet.orbitTrailWidth ?? 2)));
@@ -647,7 +659,7 @@ function draw() {
     if (moon.orbitTrail > 0) {
       moon.trail = moon.trail || [];
       moon.trail.push({ x: mx, y: my });
-      const maxLen = Math.floor((moon.orbitTrail / 100) * 150);
+      const maxLen = Math.floor((moon.orbitTrail / 100) * MAX_TRAIL_LENGTH);
       if (moon.trail.length > maxLen) moon.trail.shift();
       if (moon.trail.length > 1) {
         drawTaperedTrail(ctx, moon.trail, moon.color || TROPICAL_GREEN, moon.orbitTrail / 100, Math.max(1, Math.min(moon.radius * 2, moon.orbitTrailWidth ?? 2)));
