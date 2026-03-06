@@ -9,19 +9,32 @@
 <body>
   <div class="top-bar">
     <div id="selection-indicator" class="selection-indicator">Selected: —</div>
-    <button type="button" id="top-corner-btn" class="top-corner-btn" aria-label="Toggle control panel">Panel</button>
   </div>
   <div class="app-container">
     <canvas id="canvas"></canvas>
-    <div class="sidebar-wrapper">
-      <aside id="sidebar" class="control-panel">
+    <div class="panel-unit">
+      <button type="button" id="top-corner-btn" class="top-corner-btn panel-toggle-btn" aria-label="Toggle control panel">Panel</button>
+      <div class="sidebar-wrapper">
+        <aside id="sidebar" class="control-panel">
       <div class="toggle-row">
         <button type="button" id="design-toggle" class="add-btn design-toggle" aria-label="Toggle design controls">Hide Design</button>
         <button type="button" id="theme-toggle" class="add-btn theme-toggle" aria-label="Toggle light/dark mode">Dark</button>
         <span class="toggle-spacer"></span>
       </div>
-      <div id="design-controls" class="design-controls">
-      <div class="selector-section">
+      <div id="system-builder-controls" class="design-controls" style="display: none;">
+        <button type="button" id="add-sun-btn" class="clear-btn">Add Sun</button>
+        <div id="system-builder-selectors" class="system-builder-selectors">
+          <div class="system-builder-planets">
+            <button type="button" id="add-planet-sb-btn" class="square-btn" aria-label="Add planet to sun" title="Add planet">p</button>
+            <div id="planet-selector-buttons" class="planet-selector-buttons"></div>
+          </div>
+          <div id="system-builder-moons" class="system-builder-planets" style="display: none;">
+            <button type="button" id="add-moon-sb-btn" class="square-btn" aria-label="Add moon to planet" title="Add moon">m</button>
+            <div id="moon-selector-buttons" class="planet-selector-buttons"></div>
+          </div>
+        </div>
+      </div>
+      <div id="design-selector-section" class="selector-section">
         <div class="selector-row">
           <button type="button" id="sun-left-btn" class="add-btn selector-left-btn" aria-label="Apply to all suns">All</button>
           <select id="sun-selector" class="selector-dropdown" aria-label="Select sun">
@@ -47,6 +60,7 @@
           <button type="button" id="remove-moon" class="add-btn selector-remove-btn" aria-label="Remove selected moon">−</button>
         </div>
       </div>
+      <div id="design-controls" class="design-controls">
       <div id="swatch-bar" class="swatch-bar" role="group" aria-label="Color picker">
         <!-- 6 rows × 9 shades (ROYGBV) injected by JS -->
       </div>
@@ -104,6 +118,7 @@
       </div>
       </div>
     </aside>
+    </div>
     </div>
   </div>
   <script src="js/main.js"></script>

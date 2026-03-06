@@ -53,6 +53,8 @@ let selectedId = null;
 let selectedAt = null;
 /** When set, sliders/swatch drive all bodies in this group instead of selection */
 let applyAllTarget = null;  // { type: 'sun' } | { type: 'planet', sunId } | { type: 'moon', planetId }
+/** Sun we're adding planets to in system-builder mode */
+let systemBuilderCurrentSunId = null;
 
 const SELECTION_HIGHLIGHT_DURATION = 400;
 const MAX_TRAIL_LENGTH = 80;
@@ -121,6 +123,10 @@ function setSelection(type, id) {
   updateSelectionIndicator();
   updateApplyAllButtons();
   updateRemoveButtons();
+  if (document.getElementById('system-builder-controls')?.style.display !== 'none') {
+    refreshSystemBuilderPlanetButtons();
+    refreshSystemBuilderMoonButtons();
+  }
   if (type === 'sun' && id) syncSlidersToSun();
   if (type === 'planet' && id) syncSlidersToPlanet();
   if (type === 'moon' && id) syncSlidersToMoon();
@@ -385,6 +391,120 @@ function addSun() {
   setSelection('sun', sunId);
 }
 
+function addPlanetToSystemBuilder() {
+  if (!systemBuilderCurrentSunId) return;
+  const parentSun = getSunById(systemBuilderCurrentSunId);
+  if (!parentSun) return;
+  const planetsOfSun = bodies.planets.filter(p => p.parentId === systemBuilderCurrentSunId);
+  if (planetsOfSun.length >= 12) return;
+  const planetId = generateId('planet');
+  const { width } = getCanvasDimensions();
+  const baseOrbit = Math.min(80, width * 0.15);
+  bodies.planets.push({
+    id: planetId,
+    name: randomName(),
+    radius: 12,
+    orbitRadius: baseOrbit + Math.random() * 80,
+    orbitSpeed: 0.005 + Math.random() * 0.02,
+    ellipticity: 0,
+    orbitTilt: 0,
+    orbitAngle: Math.random() * Math.PI * 2,
+    orbitTrail: 0,
+    orbitTrailWidth: 2,
+    trail: [],
+    parentId: systemBuilderCurrentSunId,
+    color: randomColor()
+  });
+  setSelection('planet', planetId);
+  refreshSystemBuilderPlanetButtons();
+}
+
+function refreshSystemBuilderPlanetButtons() {
+  const container = document.getElementById('planet-selector-buttons');
+  const addPlanetBtn = document.getElementById('add-planet-sb-btn');
+  if (!container || !addPlanetBtn) return;
+  container.innerHTML = '';
+  const planets = systemBuilderCurrentSunId
+    ? bodies.planets.filter(p => p.parentId === systemBuilderCurrentSunId)
+    : [];
+  planets.forEach((planet, index) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'square-btn';
+
+    btn.textContent = index + 1;
+    btn.setAttribute('aria-label', `Select planet ${planet.name}`);
+    btn.title = planet.name;
+    btn.dataset.planetId = planet.id;
+    btn.addEventListener('click', () => setSelection('planet', planet.id));
+    container.appendChild(btn);
+  });
+  addPlanetBtn.disabled = !systemBuilderCurrentSunId || planets.length >= 12;
+  addPlanetBtn.classList.toggle('selected', false);
+  container.querySelectorAll('.square-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.planetId === selectedId && selectedType === 'planet');
+  });
+  refreshSystemBuilderMoonButtons();
+}
+
+function addMoonToSystemBuilder() {
+  const planet = getSelectedPlanet();
+  if (!planet) return;
+  const moonsOfPlanet = bodies.moons.filter(m => m.parentId === planet.id);
+  if (moonsOfPlanet.length >= 12) return;
+  const moonId = generateId('moon');
+  bodies.moons.push({
+    id: moonId,
+    name: randomName(),
+    radius: 6,
+    orbitRadius: 30 + Math.random() * 40,
+    orbitSpeed: 0.02 + Math.random() * 0.03,
+    ellipticity: 0,
+    orbitTilt: 0,
+    orbitAngle: Math.random() * Math.PI * 2,
+    orbitTrail: 0,
+    orbitTrailWidth: 2,
+    trail: [],
+    parentId: planet.id,
+    color: randomColor()
+  });
+  setSelection('planet', planet.id);
+  refreshSystemBuilderMoonButtons();
+}
+
+function refreshSystemBuilderMoonButtons() {
+  const section = document.getElementById('system-builder-moons');
+  const container = document.getElementById('moon-selector-buttons');
+  const addMoonBtn = document.getElementById('add-moon-sb-btn');
+  if (!section || !container || !addMoonBtn) return;
+  let planet = getSelectedPlanet();
+  if (!planet && selectedType === 'moon') {
+    const moon = bodies.moons.find(m => m.id === selectedId);
+    if (moon) planet = getPlanetById(moon.parentId);
+  }
+  const showMoons = !!planet;
+  section.style.display = showMoons ? 'flex' : 'none';
+  if (!showMoons) return;
+  container.innerHTML = '';
+  const moons = planet ? bodies.moons.filter(m => m.parentId === planet.id) : [];
+  moons.forEach((moon, index) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'square-btn';
+    btn.textContent = index + 1;
+    btn.setAttribute('aria-label', `Select moon ${moon.name}`);
+    btn.title = moon.name;
+    btn.dataset.moonId = moon.id;
+    btn.addEventListener('click', () => setSelection('moon', moon.id));
+    container.appendChild(btn);
+  });
+  addMoonBtn.disabled = moons.length >= 12;
+  addMoonBtn.classList.toggle('selected', false);
+  container.querySelectorAll('.square-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.moonId === selectedId && selectedType === 'moon');
+  });
+}
+
 function addPlanet() {
   const parentSun = getParentSunForNewPlanet();
   if (!parentSun) return;
@@ -576,21 +696,20 @@ function hexToRgba(hex, alpha) {
 function drawTaperedTrail(ctx, trail, color, maxAlpha, lineWidth) {
   const n = trail.length;
   if (n < 2) return;
-  const x0 = trail[0].x;
-  const y0 = trail[0].y;
-  const x1 = trail[n - 1].x;
-  const y1 = trail[n - 1].y;
-  const gradient = ctx.createLinearGradient(x0, y0, x1, y1);
-  gradient.addColorStop(0, hexToRgba(color, 0));
-  gradient.addColorStop(1, hexToRgba(color, maxAlpha));
-  ctx.strokeStyle = gradient;
-  ctx.lineWidth = lineWidth;
+  const minWidth = 1;
+  const maxWidth = lineWidth;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(trail[0].x, trail[0].y);
-  for (let i = 1; i < n; i++) ctx.lineTo(trail[i].x, trail[i].y);
-  ctx.stroke();
+  for (let i = 0; i < n - 1; i++) {
+    const t = (i + 0.5) / n;
+    const w = minWidth + (maxWidth - minWidth) * t;
+    ctx.strokeStyle = hexToRgba(color, maxAlpha * t);
+    ctx.lineWidth = w;
+    ctx.beginPath();
+    ctx.moveTo(trail[i].x, trail[i].y);
+    ctx.lineTo(trail[i + 1].x, trail[i + 1].y);
+    ctx.stroke();
+  }
 }
 
 function draw() {
@@ -976,6 +1095,13 @@ document.getElementById('moon-left-btn').addEventListener('click', () => {
 
 // Add / remove buttons
 document.getElementById('add-sun').addEventListener('click', addSun);
+document.getElementById('add-sun-btn').addEventListener('click', () => {
+  addSun();
+  systemBuilderCurrentSunId = bodies.suns.length ? bodies.suns[bodies.suns.length - 1].id : null;
+  refreshSystemBuilderPlanetButtons();
+});
+document.getElementById('add-planet-sb-btn').addEventListener('click', addPlanetToSystemBuilder);
+document.getElementById('add-moon-sb-btn').addEventListener('click', addMoonToSystemBuilder);
 document.getElementById('add-planet').addEventListener('click', addPlanet);
 document.getElementById('add-moon').addEventListener('click', addMoon);
 document.getElementById('remove-sun').addEventListener('click', removeSelectedSun);
@@ -1036,22 +1162,34 @@ initSwatchBar();
 
 function initDesignToggle() {
   const btn = document.getElementById('design-toggle');
-  const controls = document.getElementById('design-controls');
+  const designSelectorSection = document.getElementById('design-selector-section');
+  const systemBuilderControls = document.getElementById('system-builder-controls');
+  const controlPanel = document.getElementById('sidebar');
   btn.addEventListener('click', () => {
-    const visible = controls.style.display !== 'none';
-    controls.style.display = visible ? 'none' : 'flex';
-    btn.textContent = visible ? 'Show Design' : 'Hide Design';
+    const buildMode = systemBuilderControls.style.display === 'none';
+    designSelectorSection.style.display = buildMode ? 'none' : '';
+    systemBuilderControls.style.display = buildMode ? 'flex' : 'none';
+    btn.textContent = buildMode ? 'Show Design' : 'Hide Design';
+    controlPanel.classList.toggle('build-mode', buildMode);
+    if (buildMode) {
+      refreshSystemBuilderPlanetButtons();
+      refreshSystemBuilderMoonButtons();
+    }
   });
+  controlPanel.classList.toggle('build-mode', systemBuilderControls.style.display !== 'none');
 }
 initDesignToggle();
 
 function initPanelToggle() {
   const btn = document.getElementById('top-corner-btn');
   const wrapper = document.querySelector('.sidebar-wrapper');
+  const panelUnit = document.querySelector('.panel-unit');
   btn.addEventListener('click', () => {
     const visible = wrapper.style.display !== 'none';
     wrapper.style.display = visible ? 'none' : 'flex';
+    panelUnit.classList.toggle('panel-open', !visible);
   });
+  panelUnit.classList.toggle('panel-open', wrapper.style.display !== 'none');
 }
 initPanelToggle();
 
@@ -1064,7 +1202,8 @@ function initThemeToggle() {
     const dark = canvasBgColor === '#000000';
     document.documentElement.classList.toggle('dark-mode', dark);
     document.body.classList.toggle('dark-mode', dark);
-    draw();
+    // Don't call draw() — it would spawn another animation loop and double orbital speed.
+    // The existing loop picks up canvasBgColor on the next frame.
   });
 }
 initThemeToggle();
@@ -1078,5 +1217,7 @@ updatePropertyVisibility();
 updateSelectionIndicator();
 updateApplyAllButtons();
 updateRemoveButtons();
+refreshSystemBuilderPlanetButtons();
+refreshSystemBuilderMoonButtons();
 syncSlidersToPlanet();
 draw();
