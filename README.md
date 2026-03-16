@@ -1,6 +1,6 @@
 # AstroCurse
 
-A 2D interactive solar system simulator. Start simple, expand over time.
+A minimal 2D solar system simulator: one sun at center, one planet, one moon. Stylized and theme-based.
 
 ## Getting Started
 
@@ -24,16 +24,37 @@ A 2D interactive solar system simulator. Start simple, expand over time.
 
 3. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You should see a green sun in the center with a smaller green planet orbiting around it.
+You should see a sun at the center with a planet orbiting it and a moon orbiting the planet.
+
+## Controls
+
+35px icons along the right edge of the canvas:
+
+- **Planet speed** – adjust orbit speed of the planet
+- **Moon speed** – adjust orbit speed of the moon
+- **Orbit trails** – toggle trails for planet and moon
+- **Elliptical tilt** – set orbit tilt (shared)
+- **Orbit radius** – adjust planet and moon orbit radii
+
+Click an icon to open its popover; click outside to close.
 
 ## Project Structure
 
 ```
-astroCurse/
+orbLand/
 ├── server.js       # Express server
 ├── public/
 │   ├── index.html
-│   ├── css/style.css
-│   └── js/main.js  # Canvas animation logic
+│   ├── css/style.css   # Theme vars, icon strip, popovers
+│   └── js/main.js      # Simulation and icon handlers
 └── package.json
 ```
+
+## Theme
+
+Colors are defined via CSS custom properties in `style.css`:
+
+- `--bg-color`
+- `--sun-color`
+- `--planet-color`
+- `--moon-color`
