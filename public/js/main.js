@@ -37,10 +37,10 @@ let paused = false;
 let speedMultiplier = 1;
 
 function getCanvasDimensions() {
-  return {
-    width: window.innerWidth,
-    height: window.innerHeight
-  };
+  const area = canvas.parentElement;
+  const w = area?.clientWidth || window.innerWidth;
+  const h = area?.clientHeight || window.innerHeight;
+  return { width: Math.max(1, w), height: Math.max(1, h) };
 }
 
 function resizeCanvas() {
@@ -255,6 +255,19 @@ canvas.addEventListener('mousemove', (e) => {
   const canvasX = (e.clientX - rect.left) * scaleX;
   const canvasY = (e.clientY - rect.top) * scaleY;
   canvas.style.cursor = isClickOnSun(canvasX, canvasY) ? 'pointer' : 'default';
+});
+
+document.querySelectorAll('.link-category').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const category = btn.dataset.category;
+    const list = document.getElementById(`link-list-${category}`);
+    document.querySelectorAll('.link-list').forEach(l => l.classList.remove('visible'));
+    document.querySelectorAll('.link-category').forEach(b => b.classList.remove('active'));
+    if (list) {
+      list.classList.add('visible');
+      btn.classList.add('active');
+    }
+  });
 });
 
 draw();

@@ -4,11 +4,84 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>orbLand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div class="app-container">
+    <div class="canvas-area">
     <canvas id="canvas"></canvas>
+    <div class="link-panel-container">
+      <nav class="link-panel">
+        <div class="link-row">
+          <button type="button" class="link-category" data-category="references">References</button>
+          <div class="link-list" id="link-list-references" data-category="references">
+            <a href="https://en.wikipedia.org" class="link-item" target="_blank" rel="noopener">Wikipedia</a>
+            <a href="https://www.wikidata.org/wiki/Wikidata:Main_Page" class="link-item" target="_blank" rel="noopener">Wikidata</a>
+            <a href="https://ourworldindata.org/" class="link-item" target="_blank" rel="noopener">OWD</a>
+            <a href="https://archive.org/" class="link-item" target="_blank" rel="noopener">Internet Archive</a>
+            <a href="https://www.reddit.com/r/AskHistorians/wiki/index/" class="link-item" target="_blank" rel="noopener">r/AskHistorians</a>
+            <a href="https://www.jstor.org/" class="link-item" target="_blank" rel="noopener">JSTOR</a>
+            <a href="https://www.loc.gov/" class="link-item" target="_blank" rel="noopener">LOC</a>
+            <a href="https://www.archives.gov/" class="link-item" target="_blank" rel="noopener">National Archives</a>
+            <a href="https://doaj.org/" class="link-item" target="_blank" rel="noopener">DOAJ</a>
+            <a href="https://gutenberg.org/" class="link-item" target="_blank" rel="noopener">Gutenberg</a>
+            <a href="https://arxiv.org/" class="link-item" target="_blank" rel="noopener">arXiv</a>
+            <a href="https://pubmed.ncbi.nlm.nih.gov/" class="link-item" target="_blank" rel="noopener">NIH PubMed</a>
+            <a href="https://openalex.org/" class="link-item" target="_blank" rel="noopener">OpenAlex</a>
+            <a href="https://www.courtlistener.com/" class="link-item" target="_blank" rel="noopener">CourtListener</a>
+            <a href="https://www.sec.gov/search-filings" class="link-item" target="_blank" rel="noopener">SEC</a>
+            <a href="https://fred.stlouisfed.org/" class="link-item" target="_blank" rel="noopener">FRED</a>
+            <a href="https://data.worldbank.org/" class="link-item" target="_blank" rel="noopener">World Bank Data</a>
+            <a href="https://www.bellingcat.com/" class="link-item" target="_blank" rel="noopener">Bellingcat</a>
+          </div>
+        </div>
+        <div class="link-row">
+          <button type="button" class="link-category" data-category="news">News</button>
+          <div class="link-list" id="link-list-news" data-category="news">
+            <a href="https://www.propublica.org/" class="link-item" target="_blank" rel="noopener">ProPublica</a>
+            <a href="https://www.democracydocket.com/" class="link-item" target="_blank" rel="noopener">Democracy Docket</a>
+            <a href="https://www.motherjones.com/" class="link-item" target="_blank" rel="noopener">Mother Jones</a>
+            <a href="https://publicintegrity.org/" class="link-item" target="_blank" rel="noopener">CPI</a>
+            <a href="https://popular.info/" class="link-item" target="_blank" rel="noopener">Popular.Info</a>
+            <a href="https://www.currentaffairs.org/" class="link-item" target="_blank" rel="noopener">Current Affairs</a>
+            <a href="https://www.themarshallproject.org/" class="link-item" target="_blank" rel="noopener">Marshall Project</a>
+            <a href="https://tcij.org/" class="link-item" target="_blank" rel="noopener">TCIJ</a>
+            <a href="https://www.icij.org/" class="link-item" target="_blank" rel="noopener">ICIJ</a>
+          </div>
+        </div>
+        <div class="link-row">
+          <button type="button" class="link-category" data-category="personal">Views</button>
+          <div class="link-list" id="link-list-personal" data-category="personal">
+            <a href="https://granta.com/" class="link-item" target="_blank" rel="noopener">Granta</a>
+            <a href="https://www.theparisreview.org/" class="link-item" target="_blank" rel="noopener">The Paris Review</a>
+            <a href="https://kenyonreview.org/" class="link-item" target="_blank" rel="noopener">Kenyon Review</a>
+            <a href="https://thesewaneereview.com/" class="link-item" target="_blank" rel="noopener">The Sewanee Review</a>
+            <a href="https://www.nybooks.com/" class="link-item" target="_blank" rel="noopener">NY Review of Books</a>
+            <a href="https://www.nplusonemag.com/" class="link-item" target="_blank" rel="noopener">N+1</a>
+            <a href="https://thebaffler.com/" class="link-item" target="_blank" rel="noopener">The Baffler</a>
+            <a href="https://www.newyorker.com/" class="link-item" target="_blank" rel="noopener">The New Yorker</a>
+            <a href="https://harpers.org/" class="link-item" target="_blank" rel="noopener">Harper's</a>
+            <a href="https://www.lrb.co.uk/" class="link-item" target="_blank" rel="noopener">The London Review of Books</a>
+
+          </div>
+        </div>
+        <div class="link-row">
+          <button type="button" class="link-category" data-category="tools">Tools</button>
+          <div class="link-list" id="link-list-tools" data-category="tools">
+            <a href="https://developer.mozilla.org/" class="link-item" target="_blank" rel="noopener">MDN</a>
+            <a href="https://github.com/" class="link-item" target="_blank" rel="noopener">GitHub</a>
+            <a href="https://stackoverflow.com/" class="link-item" target="_blank" rel="noopener">Stack Overflow</a>
+            <a href="https://regex101.com/" class="link-item" target="_blank" rel="noopener">Regex101</a>
+            <a href="https://jsonformatter.org/" class="link-item" target="_blank" rel="noopener">JSON Formatter</a>
+            <a href="https://caniuse.com/" class="link-item" target="_blank" rel="noopener">Can I Use</a>
+            <a href="https://www.npmjs.com/" class="link-item" target="_blank" rel="noopener">npm</a>
+          </div>
+        </div>
+       </nav>
+    </div>
     <div class="slider-float">
       <div class="slider-cell">
         <label for="speed-multiplier-slider">All</label>
@@ -42,6 +115,7 @@
         <label for="bg-slider">Bg</label>
         <div class="slider-wrap"><input type="range" id="bg-slider" class="vertical-slider" min="0" max="100" value="4" aria-label="Background color"></div>
       </div>
+    </div>
     </div>
   </div>
   <script src="js/main.js"></script>
