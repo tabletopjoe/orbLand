@@ -8,31 +8,26 @@ function getThemeColor(varName) {
 }
 
 const sun = {
-  radius: 40,
+  radius: 27,
   get color() { return getThemeColor('--sun-color'); }
 };
 
-const planet = {
-  radius: 12,
-  orbitRadius: 120,
-  orbitSpeed: 0.01,
-  ellipticity: 0,
-  orbitTilt: 0,
-  orbitAngle: 0,
-  trailEnabled: false,
-  trail: [],
-  trailWidth: 2,
-  get color() { return getThemeColor('--planet-color'); }
-};
+const ORBIT_RATIOS = { mercury: 0.387, earth: 1.0, mars: 1.524 };
+const planets = [
+  { radius: 7, orbitRadius: 115 * ORBIT_RATIOS.mercury, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-inner-color'); } },
+  { radius: 9, orbitRadius: 115, orbitSpeed: 0.01, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-color'); } },
+  { radius: 7, orbitRadius: 115 * ORBIT_RATIOS.mars, orbitSpeed: 0.008, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-outer-color'); } }
+];
+const middlePlanetIndex = 1;
 
 const moon = {
-  radius: 6,
-  orbitRadius: 35,
+  radius: 4,
+  orbitRadius: 28,
   orbitSpeed: 0.03,
   ellipticity: 0,
   orbitTilt: 0,
-  orbitAngle: 0,
-  trailEnabled: false,
+  orbitAngle: Math.random() * Math.PI * 2,
+  trailEnabled: true,
   trail: [],
   trailWidth: 2,
   get color() { return getThemeColor('--moon-color'); }
@@ -75,11 +70,25 @@ function hexToRgba(hex, alpha) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
-function drawTaperedTrail(ctx, trail, color, maxAlpha, lineWidth) {
+function lightenHex(hex, amount) {
+  const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + amount);
+  const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + amount);
+  const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + amount);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+function darkenHex(hex, amount) {
+  const r = Math.max(0, parseInt(hex.slice(1, 3), 16) - amount);
+  const g = Math.max(0, parseInt(hex.slice(3, 5), 16) - amount);
+  const b = Math.max(0, parseInt(hex.slice(5, 7), 16) - amount);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+function drawTaperedTrail(ctx, trail, color, maxAlpha, bodyRadius) {
   const n = trail.length;
   if (n < 2) return;
   const minWidth = 1;
-  const maxWidth = lineWidth;
+  const maxWidth = bodyRadius * 2;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   for (let i = 0; i < n - 1; i++) {
@@ -102,45 +111,61 @@ function draw() {
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
 
-  ctx.fillStyle = sun.color;
+  const sunGradient = ctx.createRadialGradient(
+    cx - sun.radius * 0.3, cy - sun.radius * 0.3, 0,
+    cx, cy, sun.radius
+  );
+  sunGradient.addColorStop(0, lightenHex(sun.color, 40));
+  sunGradient.addColorStop(0.5, sun.color);
+  sunGradient.addColorStop(1, darkenHex(sun.color, 25));
+  ctx.fillStyle = sunGradient;
   ctx.beginPath();
   ctx.arc(cx, cy, sun.radius, 0, Math.PI * 2);
   ctx.fill();
 
-  if (!paused) {
-    planet.orbitAngle += planet.orbitSpeed * speedMultiplier;
-  }
-  const planetOffset = ellipsePosition(planet.orbitAngle, planet.orbitRadius, planet.ellipticity, planet.orbitTilt);
-  const px = cx + planetOffset.x;
-  const py = cy + planetOffset.y;
+  let middlePlanetX = 0, middlePlanetY = 0;
 
-  if (planet.trailEnabled) {
-    planet.trail.push({ x: px, y: py });
-    if (planet.trail.length > MAX_TRAIL_LENGTH) planet.trail.shift();
-    if (planet.trail.length > 1) {
-      drawTaperedTrail(ctx, planet.trail, planet.color, 0.6, planet.trailWidth);
+  for (let i = 0; i < planets.length; i++) {
+    const p = planets[i];
+    if (!paused) {
+      p.orbitAngle += p.orbitSpeed * speedMultiplier;
     }
-  } else {
-    planet.trail = [];
-  }
+    const offset = ellipsePosition(p.orbitAngle, p.orbitRadius, p.ellipticity, p.orbitTilt);
+    const px = cx + offset.x;
+    const py = cy + offset.y;
+    if (i === middlePlanetIndex) {
+      middlePlanetX = px;
+      middlePlanetY = py;
+    }
 
-  ctx.fillStyle = planet.color;
-  ctx.beginPath();
-  ctx.arc(px, py, planet.radius, 0, Math.PI * 2);
-  ctx.fill();
+    if (p.trailEnabled) {
+      p.trail.push({ x: px, y: py });
+      if (p.trail.length > MAX_TRAIL_LENGTH) p.trail.shift();
+      if (p.trail.length > 1) {
+        drawTaperedTrail(ctx, p.trail, p.color, 0.6, p.radius);
+      }
+    } else {
+      p.trail = [];
+    }
+
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+    ctx.fill();
+  }
 
   if (!paused) {
     moon.orbitAngle += moon.orbitSpeed * speedMultiplier;
   }
   const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt);
-  const mx = px + moonOffset.x;
-  const my = py + moonOffset.y;
+  const mx = middlePlanetX + moonOffset.x;
+  const my = middlePlanetY + moonOffset.y;
 
   if (moon.trailEnabled) {
     moon.trail.push({ x: mx, y: my });
     if (moon.trail.length > MAX_TRAIL_LENGTH) moon.trail.shift();
     if (moon.trail.length > 1) {
-      drawTaperedTrail(ctx, moon.trail, moon.color, 0.6, moon.trailWidth);
+      drawTaperedTrail(ctx, moon.trail, moon.color, 0.6, moon.radius);
     }
   } else {
     moon.trail = [];
@@ -161,7 +186,10 @@ document.getElementById('speed-multiplier-slider').addEventListener('input', (e)
 
 document.getElementById('planet-speed-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);
-  planet.orbitSpeed = 0.005 + (val - 5) / 45 * 0.045;
+  const speed = 0.005 + (val - 5) / 45 * 0.045;
+  planets[1].orbitSpeed = speed;
+  planets[0].orbitSpeed = speed * 1.2;
+  planets[2].orbitSpeed = speed * 0.8;
 });
 
 document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
@@ -171,22 +199,26 @@ document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
 
 document.getElementById('trails-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);
-  planet.trailEnabled = val > 0;
-  moon.trailEnabled = val > 0;
-  if (val === 0) {
-    planet.trail = [];
-    moon.trail = [];
-  }
+  const enabled = val > 0;
+  planets.forEach(p => {
+    p.trailEnabled = enabled;
+    if (!enabled) p.trail = [];
+  });
+  moon.trailEnabled = enabled;
+  if (!enabled) moon.trail = [];
 });
 
 document.getElementById('tilt-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value) * Math.PI / 180;
-  planet.orbitTilt = val;
+  planets.forEach(p => { p.orbitTilt = val; });
   moon.orbitTilt = val;
 });
 
 document.getElementById('planet-radius-slider').addEventListener('input', (e) => {
-  planet.orbitRadius = Number(e.target.value);
+  const val = Number(e.target.value);
+  planets[1].orbitRadius = val;
+  planets[0].orbitRadius = val * ORBIT_RATIOS.mercury;
+  planets[2].orbitRadius = val * ORBIT_RATIOS.mars;
 });
 
 document.getElementById('moon-radius-slider').addEventListener('input', (e) => {
