@@ -1,7 +1,6 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-const ICON_STRIP_WIDTH = 35;
 const MAX_TRAIL_LENGTH = 80;
 
 function getThemeColor(varName) {
@@ -39,9 +38,11 @@ const moon = {
   get color() { return getThemeColor('--moon-color'); }
 };
 
+let paused = false;
+
 function getCanvasDimensions() {
   return {
-    width: Math.floor(window.innerWidth - ICON_STRIP_WIDTH),
+    width: window.innerWidth,
     height: window.innerHeight
   };
 }
@@ -105,7 +106,9 @@ function draw() {
   ctx.arc(cx, cy, sun.radius, 0, Math.PI * 2);
   ctx.fill();
 
-  planet.orbitAngle += planet.orbitSpeed;
+  if (!paused) {
+    planet.orbitAngle += planet.orbitSpeed;
+  }
   const planetOffset = ellipsePosition(planet.orbitAngle, planet.orbitRadius, planet.ellipticity, planet.orbitTilt);
   const px = cx + planetOffset.x;
   const py = cy + planetOffset.y;
@@ -125,7 +128,9 @@ function draw() {
   ctx.arc(px, py, planet.radius, 0, Math.PI * 2);
   ctx.fill();
 
-  moon.orbitAngle += moon.orbitSpeed;
+  if (!paused) {
+    moon.orbitAngle += moon.orbitSpeed;
+  }
   const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt);
   const mx = px + moonOffset.x;
   const my = py + moonOffset.y;
@@ -148,134 +153,70 @@ function draw() {
   requestAnimationFrame(draw);
 }
 
-let activePopover = null;
+document.getElementById('planet-speed-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value);
+  planet.orbitSpeed = 0.005 + (val - 5) / 45 * 0.045;
+});
 
-function closePopover() {
-  if (activePopover) {
-    activePopover.remove();
-    activePopover = null;
+document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value);
+  moon.orbitSpeed = 0.01 + (val - 10) / 90 * 0.09;
+});
+
+document.getElementById('trails-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value);
+  planet.trailEnabled = val > 0;
+  moon.trailEnabled = val > 0;
+  if (val === 0) {
+    planet.trail = [];
+    moon.trail = [];
   }
-  document.removeEventListener('click', handleOutsideClick);
+});
+
+document.getElementById('tilt-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value) * Math.PI / 180;
+  planet.orbitTilt = val;
+  moon.orbitTilt = val;
+});
+
+document.getElementById('planet-radius-slider').addEventListener('input', (e) => {
+  planet.orbitRadius = Number(e.target.value);
+});
+
+document.getElementById('moon-radius-slider').addEventListener('input', (e) => {
+  moon.orbitRadius = Number(e.target.value);
+});
+
+document.getElementById('bg-slider').addEventListener('input', (e) => {
+  const v = Number(e.target.value);
+  const hex = Math.round(v * 255 / 100).toString(16).padStart(2, '0');
+  document.documentElement.style.setProperty('--bg-color', `#${hex}${hex}${hex}`);
+});
+
+function isClickOnSun(canvasX, canvasY) {
+  const cx = canvas.width / 2;
+  const cy = canvas.height / 2;
+  return Math.sqrt((canvasX - cx) ** 2 + (canvasY - cy) ** 2) <= sun.radius;
 }
 
-function handleOutsideClick(e) {
-  const strip = document.querySelector('.icon-strip');
-  const popover = document.querySelector('.popover');
-  if (popover && !popover.contains(e.target) && strip && !strip.contains(e.target)) {
-    closePopover();
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const canvasX = (e.clientX - rect.left) * scaleX;
+  const canvasY = (e.clientY - rect.top) * scaleY;
+  if (isClickOnSun(canvasX, canvasY)) {
+    paused = !paused;
   }
-}
-
-function createPopover(content, anchorBtn) {
-  closePopover();
-  const popover = document.createElement('div');
-  popover.className = 'popover';
-  popover.innerHTML = content;
-  popover.addEventListener('click', (ev) => ev.stopPropagation());
-  document.body.appendChild(popover);
-
-  if (anchorBtn) {
-    const rect = anchorBtn.getBoundingClientRect();
-    popover.style.position = 'fixed';
-    popover.style.top = `${rect.top}px`;
-    popover.style.right = `${window.innerWidth - rect.left + 8}px`;
-  }
-
-  activePopover = popover;
-  setTimeout(() => document.addEventListener('click', handleOutsideClick), 0);
-}
-
-document.getElementById('planet-speed-icon').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const min = 0.005, max = 0.05;
-  const pct = (planet.orbitSpeed - min) / (max - min);
-  createPopover(`
-    <div class="popover-slider">
-      <label>Planet speed</label>
-      <input type="range" min="5" max="50" value="${Math.round(pct * 45 + 5)}" id="planet-speed-slider">
-    </div>
-  `, e.currentTarget);
-  const slider = document.getElementById('planet-speed-slider');
-  slider.addEventListener('input', (ev) => {
-    const val = Number(ev.target.value);
-    planet.orbitSpeed = min + (val - 5) / 45 * (max - min);
-  });
 });
 
-document.getElementById('moon-speed-icon').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const min = 0.01, max = 0.1;
-  const pct = (moon.orbitSpeed - min) / (max - min);
-  createPopover(`
-    <div class="popover-slider">
-      <label>Moon speed</label>
-      <input type="range" min="10" max="100" value="${Math.round(pct * 90 + 10)}" id="moon-speed-slider">
-    </div>
-  `, e.currentTarget);
-  const slider = document.getElementById('moon-speed-slider');
-  slider.addEventListener('input', (ev) => {
-    const val = Number(ev.target.value);
-    moon.orbitSpeed = min + (val - 10) / 90 * (max - min);
-  });
-});
-
-document.getElementById('trails-icon').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const enabled = planet.trailEnabled && moon.trailEnabled;
-  createPopover(`
-    <div class="popover-toggle">
-      <label for="trails-check">Orbit trails</label>
-      <input type="checkbox" id="trails-check" ${enabled ? 'checked' : ''}>
-    </div>
-  `, e.currentTarget);
-  const check = document.getElementById('trails-check');
-  check.addEventListener('change', () => {
-    planet.trailEnabled = check.checked;
-    moon.trailEnabled = check.checked;
-    if (!check.checked) {
-      planet.trail = [];
-      moon.trail = [];
-    }
-  });
-});
-
-document.getElementById('tilt-icon').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const deg = Math.round((planet.orbitTilt * 180 / Math.PI + 360) % 360);
-  createPopover(`
-    <div class="popover-slider">
-      <label>Orbit tilt (degrees)</label>
-      <input type="range" min="0" max="360" value="${deg}" id="tilt-slider">
-    </div>
-  `, e.currentTarget);
-  const slider = document.getElementById('tilt-slider');
-  slider.addEventListener('input', (ev) => {
-    const val = Number(ev.target.value) * Math.PI / 180;
-    planet.orbitTilt = val;
-    moon.orbitTilt = val;
-  });
-});
-
-document.getElementById('radius-icon').addEventListener('click', (e) => {
-  e.stopPropagation();
-  createPopover(`
-    <div class="radius-popover">
-      <div class="popover-row">
-        <label>Planet orbit</label>
-        <input type="range" min="60" max="300" value="${planet.orbitRadius}" id="planet-radius-slider">
-      </div>
-      <div class="popover-row">
-        <label>Moon orbit</label>
-        <input type="range" min="20" max="80" value="${moon.orbitRadius}" id="moon-radius-slider">
-      </div>
-    </div>
-  `, e.currentTarget);
-  document.getElementById('planet-radius-slider').addEventListener('input', (ev) => {
-    planet.orbitRadius = Number(ev.target.value);
-  });
-  document.getElementById('moon-radius-slider').addEventListener('input', (ev) => {
-    moon.orbitRadius = Number(ev.target.value);
-  });
+canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const canvasX = (e.clientX - rect.left) * scaleX;
+  const canvasY = (e.clientY - rect.top) * scaleY;
+  canvas.style.cursor = isClickOnSun(canvasX, canvasY) ? 'pointer' : 'default';
 });
 
 draw();

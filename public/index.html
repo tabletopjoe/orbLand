@@ -9,22 +9,35 @@
 <body>
   <div class="app-container">
     <canvas id="canvas"></canvas>
-    <div class="icon-strip">
-      <button type="button" id="planet-speed-icon" class="icon-btn" aria-label="Planet speed" title="Planet speed">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 6v6l4 2"/></svg>
-      </button>
-      <button type="button" id="moon-speed-icon" class="icon-btn" aria-label="Moon speed" title="Moon speed">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="6"/><path d="M12 8v4l3 2"/></svg>
-      </button>
-      <button type="button" id="trails-icon" class="icon-btn" aria-label="Orbit trails" title="Orbit trails">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 0 1 0 20" stroke-dasharray="2 2"/><path d="M12 2a10 10 0 0 0 0 20" stroke-dasharray="2 2"/></svg>
-      </button>
-      <button type="button" id="tilt-icon" class="icon-btn" aria-label="Elliptical tilt" title="Elliptical tilt">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="6" transform="rotate(-30 12 12)"/></svg>
-      </button>
-      <button type="button" id="radius-icon" class="icon-btn" aria-label="Orbit radius" title="Orbit radius">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="12" x2="12" y2="2"/></svg>
-      </button>
+    <div class="slider-float">
+      <div class="slider-cell">
+        <label for="planet-speed-slider">Planet</label>
+        <div class="slider-wrap"><input type="range" id="planet-speed-slider" class="vertical-slider" min="5" max="50" value="10" aria-label="Planet speed"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="moon-speed-slider">Moon</label>
+        <div class="slider-wrap"><input type="range" id="moon-speed-slider" class="vertical-slider" min="10" max="100" value="30" aria-label="Moon speed"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="trails-slider">Trails</label>
+        <div class="slider-wrap"><input type="range" id="trails-slider" class="vertical-slider" min="0" max="100" value="0" aria-label="Orbit trails"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="tilt-slider">Tilt</label>
+        <div class="slider-wrap"><input type="range" id="tilt-slider" class="vertical-slider" min="0" max="360" value="0" aria-label="Orbit tilt"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="planet-radius-slider">P orbit</label>
+        <div class="slider-wrap"><input type="range" id="planet-radius-slider" class="vertical-slider" min="60" max="300" value="120" aria-label="Planet orbit radius"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="moon-radius-slider">M orbit</label>
+        <div class="slider-wrap"><input type="range" id="moon-radius-slider" class="vertical-slider" min="20" max="80" value="35" aria-label="Moon orbit radius"></div>
+      </div>
+      <div class="slider-cell">
+        <label for="bg-slider">Bg</label>
+        <div class="slider-wrap"><input type="range" id="bg-slider" class="vertical-slider" min="0" max="100" value="4" aria-label="Background color"></div>
+      </div>
     </div>
   </div>
   <script src="js/main.js"></script>
