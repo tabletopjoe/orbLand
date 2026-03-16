@@ -39,6 +39,7 @@ const moon = {
 };
 
 let paused = false;
+let speedMultiplier = 1;
 
 function getCanvasDimensions() {
   return {
@@ -107,7 +108,7 @@ function draw() {
   ctx.fill();
 
   if (!paused) {
-    planet.orbitAngle += planet.orbitSpeed;
+    planet.orbitAngle += planet.orbitSpeed * speedMultiplier;
   }
   const planetOffset = ellipsePosition(planet.orbitAngle, planet.orbitRadius, planet.ellipticity, planet.orbitTilt);
   const px = cx + planetOffset.x;
@@ -129,7 +130,7 @@ function draw() {
   ctx.fill();
 
   if (!paused) {
-    moon.orbitAngle += moon.orbitSpeed;
+    moon.orbitAngle += moon.orbitSpeed * speedMultiplier;
   }
   const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt);
   const mx = px + moonOffset.x;
@@ -152,6 +153,11 @@ function draw() {
 
   requestAnimationFrame(draw);
 }
+
+document.getElementById('speed-multiplier-slider').addEventListener('input', (e) => {
+  const val = Number(e.target.value);
+  speedMultiplier = val / 100;
+});
 
 document.getElementById('planet-speed-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);

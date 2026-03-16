@@ -11,5 +11,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`AstroCurse running at http://localhost:${PORT}`);
+  console.log(`orbLand running at http://localhost:${PORT}`);
 });

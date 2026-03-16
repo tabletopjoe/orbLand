@@ -1,4 +1,4 @@
-# AstroCurse
+# orbLand
 
 A minimal 2D solar system simulator: one sun at center, one planet, one moon. Stylized and theme-based.
 
