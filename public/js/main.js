@@ -286,6 +286,24 @@ document.getElementById('bg-slider').addEventListener('input', (e) => {
   updateUiColorsForBg(Number(e.target.value));
 });
 
+function randomHex() {
+  return '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
+}
+
+document.getElementById('random-colors-btn').addEventListener('click', () => {
+  document.documentElement.style.setProperty('--sun-color', randomHex());
+  document.documentElement.style.setProperty('--planet-inner-color', randomHex());
+  document.documentElement.style.setProperty('--planet-venus-color', randomHex());
+  document.documentElement.style.setProperty('--planet-color', randomHex());
+  document.documentElement.style.setProperty('--planet-outer-color', randomHex());
+  document.documentElement.style.setProperty('--planet-jupiter-color', randomHex());
+  document.documentElement.style.setProperty('--moon-color', randomHex());
+  document.documentElement.style.setProperty('--moon-io-color', randomHex());
+  document.documentElement.style.setProperty('--moon-europa-color', randomHex());
+  document.documentElement.style.setProperty('--moon-ganymede-color', randomHex());
+  document.documentElement.style.setProperty('--moon-callisto-color', randomHex());
+});
+
 function isClickOnSun(canvasX, canvasY) {
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;

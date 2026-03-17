@@ -152,6 +152,24 @@ body {
   pointer-events: auto;
 }
 
+.icon-btn {
+  width: var(--thumb-size);
+  height: var(--thumb-size);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  color: var(--ui-color);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: var(--ui-hover);
+}
+
 .slider-cell {
   display: flex;
   flex-direction: column;
@@ -168,7 +186,7 @@ body {
 }
 
 .slider-wrap {
-  height: 88px;
+  height: 66px;
   width: var(--thumb-size);
   display: flex;
   align-items: center;
@@ -176,7 +194,7 @@ body {
 }
 
 .vertical-slider {
-  width: 88px;
+  width: 66px;
   height: var(--thumb-size);
   -webkit-appearance: none;
   appearance: none;
