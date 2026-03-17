@@ -21,10 +21,17 @@ body {
   --sun-color: #f5e6a3;
   --planet-color: #5ab8a8;
   --planet-inner-color: #2d5a7b;
+  --planet-venus-color: #e6d5a8;
   --planet-outer-color: #c1440e;
+  --planet-jupiter-color: #c9a86c;
+  --moon-io-color: #e8c547;
+  --moon-europa-color: #e8e8e0;
+  --moon-ganymede-color: #a0a0a0;
+  --moon-callisto-color: #5a5a5a;
   --moon-color: #c9c9c9;
-  --slider-color: rgba(255, 255, 255, 0.7);
-  --slider-track: rgba(255, 255, 255, 0.2);
+  --ui-color: rgba(255, 255, 255, 0.7);
+  --ui-hover: rgba(255, 255, 255, 0.95);
+  --ui-track: rgba(255, 255, 255, 0.2);
   --thumb-size: 14px;
 }
 
@@ -86,7 +93,7 @@ body {
   font-family: 'Poppins', system-ui, sans-serif;
   font-size: 0.8rem;
   font-weight: 400;
-  color: var(--slider-color);
+  color: var(--ui-color);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -95,7 +102,7 @@ body {
 }
 
 .link-item:hover {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--ui-hover);
 }
 
 .link-category {
@@ -104,7 +111,7 @@ body {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--slider-color);
+  color: var(--ui-color);
   background: transparent;
   border: none;
   padding: 0.5rem 0;
@@ -114,7 +121,7 @@ body {
 
 .link-category:hover,
 .link-category.active {
-  color: rgba(255, 255, 255, 0.95);
+  color: var(--ui-hover);
   font-size: 0.945rem;
 }
 
@@ -155,7 +162,7 @@ body {
 .slider-cell label {
   font-family: system-ui, sans-serif;
   font-size: 0.65rem;
-  color: var(--slider-color);
+  color: var(--ui-color);
   text-transform: uppercase;
   letter-spacing: 0.02em;
 }
@@ -173,7 +180,7 @@ body {
   height: var(--thumb-size);
   -webkit-appearance: none;
   appearance: none;
-  background: var(--slider-track);
+  background: var(--ui-track);
   border-radius: calc(var(--thumb-size) / 2);
   transform: rotate(-90deg);
   transform-origin: center center;
@@ -183,7 +190,7 @@ body {
   -webkit-appearance: none;
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background: var(--slider-color);
+  background: var(--ui-color);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -191,7 +198,7 @@ body {
 .vertical-slider::-moz-range-thumb {
   width: var(--thumb-size);
   height: var(--thumb-size);
-  background: var(--slider-color);
+  background: var(--ui-color);
   border: none;
   border-radius: 50%;
   cursor: pointer;
