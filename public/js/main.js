@@ -13,14 +13,16 @@ const sun = {
 };
 
 const ORBIT_RATIOS = { mercury: 0.387, venus: 0.723, earth: 1.0, mars: 1.524, jupiter: 5.203 };
+// revealLevel: 0=Mercury,Venus | 1=+Earth | 2=+moon | 3=+Mars | 4=+Jupiter+moons
 const planets = [
-  { radius: 6, orbitRadius: 115 * ORBIT_RATIOS.mercury, orbitSpeed: 0.016, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-inner-color'); } },
-  { radius: 8, orbitRadius: 115 * ORBIT_RATIOS.venus, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-venus-color'); } },
-  { radius: 9, orbitRadius: 115, orbitSpeed: 0.01, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-color'); } },
-  { radius: 7, orbitRadius: 115 * ORBIT_RATIOS.mars, orbitSpeed: 0.008, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-outer-color'); } },
-  { radius: 11, orbitRadius: 115 * ORBIT_RATIOS.jupiter, orbitSpeed: 0.0044, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--planet-jupiter-color'); } }
+  { radius: 6, orbitRadius: 115 * ORBIT_RATIOS.mercury, orbitSpeed: 0.016, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-inner-color'); } },
+  { radius: 8, orbitRadius: 115 * ORBIT_RATIOS.venus, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-venus-color'); } },
+  { radius: 9, orbitRadius: 115, orbitSpeed: 0.01, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 1, get color() { return getThemeColor('--planet-color'); } },
+  { radius: 7, orbitRadius: 115 * ORBIT_RATIOS.mars, orbitSpeed: 0.008, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 3, get color() { return getThemeColor('--planet-outer-color'); } },
+  { radius: 11, orbitRadius: 115 * ORBIT_RATIOS.jupiter, orbitSpeed: 0.0044, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 4, get color() { return getThemeColor('--planet-jupiter-color'); } }
 ];
 const middlePlanetIndex = 2;
+const MOON_REVEAL_LEVEL = 2;
 
 const moon = {
   radius: 4,
@@ -45,6 +47,8 @@ const jupiterMoons = [
 
 let paused = false;
 let speedMultiplier = 1;
+let revealLevel = 0;
+const MAX_REVEAL_LEVEL = 4;
 
 function getCanvasDimensions() {
   const area = canvas.parentElement;
@@ -153,44 +157,52 @@ function draw() {
       jupiterY = py;
     }
 
-    if (p.trailEnabled) {
-      p.trail.push({ x: px, y: py });
-      if (p.trail.length > MAX_TRAIL_LENGTH) p.trail.shift();
-      if (p.trail.length > 1) {
-        drawTaperedTrail(ctx, p.trail, p.color, 0.6, p.radius);
+    if (p.revealLevel <= revealLevel) {
+      if (p.trailEnabled) {
+        p.trail.push({ x: px, y: py });
+        if (p.trail.length > MAX_TRAIL_LENGTH) p.trail.shift();
+        if (p.trail.length > 1) {
+          drawTaperedTrail(ctx, p.trail, p.color, 0.6, p.radius);
+        }
+      } else {
+        p.trail = [];
       }
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(px, py, p.radius, 0, Math.PI * 2);
+      ctx.fill();
     } else {
       p.trail = [];
     }
-
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(px, py, p.radius, 0, Math.PI * 2);
-    ctx.fill();
   }
 
-  if (!paused) {
-    moon.orbitAngle += moon.orbitSpeed * speedMultiplier;
-  }
-  const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt);
-  const mx = middlePlanetX + moonOffset.x;
-  const my = middlePlanetY + moonOffset.y;
-
-  if (moon.trailEnabled) {
-    moon.trail.push({ x: mx, y: my });
-    if (moon.trail.length > MAX_TRAIL_LENGTH) moon.trail.shift();
-    if (moon.trail.length > 1) {
-      drawTaperedTrail(ctx, moon.trail, moon.color, 0.6, moon.radius);
+  if (revealLevel >= MOON_REVEAL_LEVEL) {
+    if (!paused) {
+      moon.orbitAngle += moon.orbitSpeed * speedMultiplier;
     }
+    const moonOffset = ellipsePosition(moon.orbitAngle, moon.orbitRadius, moon.ellipticity, moon.orbitTilt);
+    const mx = middlePlanetX + moonOffset.x;
+    const my = middlePlanetY + moonOffset.y;
+
+    if (moon.trailEnabled) {
+      moon.trail.push({ x: mx, y: my });
+      if (moon.trail.length > MAX_TRAIL_LENGTH) moon.trail.shift();
+      if (moon.trail.length > 1) {
+        drawTaperedTrail(ctx, moon.trail, moon.color, 0.6, moon.radius);
+      }
+    } else {
+      moon.trail = [];
+    }
+
+    ctx.fillStyle = moon.color;
+    ctx.beginPath();
+    ctx.arc(mx, my, moon.radius, 0, Math.PI * 2);
+    ctx.fill();
   } else {
     moon.trail = [];
   }
 
-  ctx.fillStyle = moon.color;
-  ctx.beginPath();
-  ctx.arc(mx, my, moon.radius, 0, Math.PI * 2);
-  ctx.fill();
-
+  if (revealLevel >= MAX_REVEAL_LEVEL) {
   jupiterMoons.forEach(jm => {
     if (!paused) {
       jm.orbitAngle += jm.orbitSpeed * speedMultiplier;
@@ -214,6 +226,7 @@ function draw() {
     ctx.arc(jmx, jmy, jm.radius, 0, Math.PI * 2);
     ctx.fill();
   });
+  }
 
   requestAnimationFrame(draw);
 }
@@ -332,6 +345,10 @@ canvas.addEventListener('mousemove', (e) => {
 
 updateUiColorsForBg(Number(document.getElementById('bg-slider').value));
 
+function incrementReveal() {
+  if (revealLevel < MAX_REVEAL_LEVEL) revealLevel++;
+}
+
 document.querySelectorAll('.link-category').forEach(btn => {
   btn.addEventListener('click', () => {
     const category = btn.dataset.category;
@@ -342,7 +359,9 @@ document.querySelectorAll('.link-category').forEach(btn => {
       list.classList.add('visible');
       btn.classList.add('active');
     }
+    incrementReveal();
   });
 });
+
 
 draw();
