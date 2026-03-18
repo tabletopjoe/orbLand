@@ -24,10 +24,13 @@ const planets = [
 const middlePlanetIndex = 2;
 const MOON_REVEAL_LEVEL = 2;
 
+const MOON_ORBIT_BASE = 28;
 const moon = {
   radius: 4,
   orbitRadius: 28,
+  orbitRadiusBase: 28,
   orbitSpeed: 0.03,
+  speedBase: 0.03,
   ellipticity: 0,
   orbitTilt: 0,
   orbitAngle: Math.random() * Math.PI * 2,
@@ -39,10 +42,10 @@ const moon = {
 
 const JUPITER_INDEX = 4;
 const jupiterMoons = [
-  { radius: 3, orbitRadius: 18, orbitSpeed: 0.08, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-io-color'); } },
-  { radius: 3, orbitRadius: 28, orbitSpeed: 0.063, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-europa-color'); } },
-  { radius: 4, orbitRadius: 45, orbitSpeed: 0.05, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-ganymede-color'); } },
-  { radius: 3, orbitRadius: 78, orbitSpeed: 0.038, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-callisto-color'); } }
+  { radius: 3, orbitRadius: 18, orbitRadiusBase: 18, orbitSpeed: 0.08, speedBase: 0.08, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-io-color'); } },
+  { radius: 3, orbitRadius: 28, orbitRadiusBase: 28, orbitSpeed: 0.063, speedBase: 0.063, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-europa-color'); } },
+  { radius: 4, orbitRadius: 45, orbitRadiusBase: 45, orbitSpeed: 0.05, speedBase: 0.05, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-ganymede-color'); } },
+  { radius: 3, orbitRadius: 78, orbitRadiusBase: 78, orbitSpeed: 0.038, speedBase: 0.038, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, get color() { return getThemeColor('--moon-callisto-color'); } }
 ];
 
 let paused = false;
@@ -248,7 +251,9 @@ document.getElementById('planet-speed-slider').addEventListener('input', (e) => 
 
 document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);
-  moon.orbitSpeed = 0.01 + (val - 10) / 90 * 0.09;
+  const mult = (0.01 + (val - 10) / 90 * 0.09) / 0.03;
+  moon.orbitSpeed = moon.speedBase * mult;
+  jupiterMoons.forEach(jm => { jm.orbitSpeed = jm.speedBase * mult; });
 });
 
 document.getElementById('trails-slider').addEventListener('input', (e) => {
@@ -283,7 +288,10 @@ document.getElementById('planet-radius-slider').addEventListener('input', (e) =>
 });
 
 document.getElementById('moon-radius-slider').addEventListener('input', (e) => {
-  moon.orbitRadius = Number(e.target.value);
+  const val = Number(e.target.value);
+  const mult = val / MOON_ORBIT_BASE;
+  moon.orbitRadius = moon.orbitRadiusBase * mult;
+  jupiterMoons.forEach(jm => { jm.orbitRadius = jm.orbitRadiusBase * mult; });
 });
 
 function updateUiColorsForBg(value) {
