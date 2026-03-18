@@ -52,6 +52,9 @@ let paused = false;
 let speedMultiplier = 1;
 let revealLevel = 0;
 const MAX_REVEAL_LEVEL = 4;
+const MAX_STARS = 92;
+let starCache = null;
+let starCacheSize = null;
 
 function getCanvasDimensions() {
   const area = canvas.parentElement;
@@ -64,6 +67,7 @@ function resizeCanvas() {
   const { width, height } = getCanvasDimensions();
   canvas.width = width;
   canvas.height = height;
+  starCache = null;
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -101,6 +105,40 @@ function darkenHex(hex, amount) {
   return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
 }
 
+function getStars() {
+  const { width, height } = getCanvasDimensions();
+  if (starCache && starCacheSize && starCacheSize.width === width && starCacheSize.height === height) {
+    return starCache;
+  }
+  const stars = [];
+  for (let i = 0; i < MAX_STARS; i++) {
+    stars.push({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      brightness: 0.25 + Math.random() * 0.75
+    });
+  }
+  starCache = stars;
+  starCacheSize = { width, height };
+  return stars;
+}
+
+function drawStars(ctx, sliderValue) {
+  if (sliderValue <= 0) return;
+  const count = Math.floor((sliderValue / 100) * MAX_STARS);
+  const intensity = sliderValue / 100;
+  const stars = getStars();
+  const starColor = getThemeColor('--star-color');
+  for (let i = 0; i < count; i++) {
+    const s = stars[i];
+    const alpha = s.brightness * intensity * 0.9;
+    ctx.fillStyle = hexToRgba(starColor, alpha);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
 function drawTaperedTrail(ctx, trail, color, maxAlpha, bodyRadius) {
   const n = trail.length;
   if (n < 2) return;
@@ -124,6 +162,8 @@ function draw() {
   const bgColor = getThemeColor('--bg-color');
   ctx.fillStyle = bgColor;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawStars(ctx, Number(document.getElementById('stars-slider').value));
 
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
@@ -301,11 +341,13 @@ function updateUiColorsForBg(value) {
   document.documentElement.style.setProperty('--ui-color', isLight ? 'rgba(0, 0, 0, 0.7)' : 'rgba(255, 255, 255, 0.7)');
   document.documentElement.style.setProperty('--ui-hover', isLight ? 'rgba(0, 0, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)');
   document.documentElement.style.setProperty('--ui-track', isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)');
+  document.documentElement.style.setProperty('--star-color', isLight ? '#000000' : '#ffffff');
 }
 
 document.getElementById('bg-slider').addEventListener('input', (e) => {
   updateUiColorsForBg(Number(e.target.value));
 });
+
 
 function randomHex() {
   return '#' + Math.floor(Math.random() * 0xffffff).toString(16).padStart(6, '0');
