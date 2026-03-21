@@ -38,6 +38,10 @@ body {
   --ui-track: rgba(255, 255, 255, 0.2);
   --star-color: #ffffff;
   --moon-crescent: #fcfbf7;
+  /* Link-panel crescent fill gradient (updated with bg slider in main.js) */
+  --crescent-moon-a: #fcfbf7;
+  --crescent-moon-b: #dcd8ce;
+  --crescent-moon-c: #a39e94;
   --thumb-size: 14px;
 }
 

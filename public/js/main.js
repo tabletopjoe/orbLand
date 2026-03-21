@@ -1,8 +1,10 @@
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 
-/** Stored trail points (lower = fewer draws). */
-const MAX_TRAIL_LENGTH = 48;
+/** Slider at 100% maps to this many stored trail points (higher = heavier). */
+const TRAIL_LENGTH_MAX = 200;
+/** Current cap from trails slider (0 = trails off). */
+let trailMaxLength = TRAIL_LENGTH_MAX;
 /** Draw every Nth segment along the trail (fewer strokes, similar look). */
 const TRAIL_DRAW_STRIDE = 2;
 
@@ -257,7 +259,7 @@ function draw() {
     if (p.revealLevel <= revealLevel) {
       if (p.trailEnabled) {
         p.trail.push({ x: px, y: py });
-        if (p.trail.length > MAX_TRAIL_LENGTH) p.trail.shift();
+        if (p.trail.length > trailMaxLength) p.trail.shift();
         if (p.trail.length > 1) {
           drawTaperedTrail(ctx, p.trail, C.planet[i], 0.6, p.radius);
         }
@@ -283,7 +285,7 @@ function draw() {
 
     if (moon.trailEnabled) {
       moon.trail.push({ x: mx, y: my });
-      if (moon.trail.length > MAX_TRAIL_LENGTH) moon.trail.shift();
+      if (moon.trail.length > trailMaxLength) moon.trail.shift();
       if (moon.trail.length > 1) {
         drawTaperedTrail(ctx, moon.trail, C.moon, 0.6, moon.radius);
       }
@@ -310,7 +312,7 @@ function draw() {
 
     if (jm.trailEnabled) {
       jm.trail.push({ x: jmx, y: jmy });
-      if (jm.trail.length > MAX_TRAIL_LENGTH) jm.trail.shift();
+      if (jm.trail.length > trailMaxLength) jm.trail.shift();
       if (jm.trail.length > 1) {
         drawTaperedTrail(ctx, jm.trail, C.jupiterMoon[ji], 0.6, jm.radius);
       }
@@ -350,20 +352,27 @@ document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
   jupiterMoons.forEach(jm => { jm.orbitSpeed = jm.speedBase * mult; });
 });
 
-document.getElementById('trails-slider').addEventListener('input', (e) => {
-  const val = Number(e.target.value);
+function syncTrailLengthFromSlider() {
+  const val = Number(document.getElementById('trails-slider').value);
   const enabled = val > 0;
+  trailMaxLength = enabled ? Math.max(1, Math.round((val / 100) * TRAIL_LENGTH_MAX)) : 0;
+
   planets.forEach(p => {
     p.trailEnabled = enabled;
     if (!enabled) p.trail = [];
+    else while (p.trail.length > trailMaxLength) p.trail.shift();
   });
   moon.trailEnabled = enabled;
   if (!enabled) moon.trail = [];
+  else while (moon.trail.length > trailMaxLength) moon.trail.shift();
   jupiterMoons.forEach(jm => {
     jm.trailEnabled = enabled;
     if (!enabled) jm.trail = [];
+    else while (jm.trail.length > trailMaxLength) jm.trail.shift();
   });
-});
+}
+
+document.getElementById('trails-slider').addEventListener('input', syncTrailLengthFromSlider);
 
 document.getElementById('planet-radius-slider').addEventListener('input', (e) => {
   orbitRadiusScale = Number(e.target.value) / 115;
@@ -385,6 +394,18 @@ function updateUiColorsForBg(value) {
   document.documentElement.style.setProperty('--ui-hover', isLight ? 'rgba(0, 0, 0, 0.95)' : 'rgba(255, 255, 255, 0.95)');
   document.documentElement.style.setProperty('--ui-track', isLight ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)');
   document.documentElement.style.setProperty('--star-color', isLight ? '#000000' : '#ffffff');
+
+  if (isLight) {
+    document.documentElement.style.setProperty('--crescent-moon-a', '#141414');
+    document.documentElement.style.setProperty('--crescent-moon-b', '#4a4a4a');
+    document.documentElement.style.setProperty('--crescent-moon-c', '#6e6e6e');
+    document.documentElement.style.setProperty('--moon-crescent', '#141414');
+  } else {
+    document.documentElement.style.setProperty('--crescent-moon-a', '#fcfbf7');
+    document.documentElement.style.setProperty('--crescent-moon-b', '#dcd8ce');
+    document.documentElement.style.setProperty('--crescent-moon-c', '#a39e94');
+    document.documentElement.style.setProperty('--moon-crescent', '#fcfbf7');
+  }
 }
 
 document.getElementById('bg-slider').addEventListener('input', (e) => {
@@ -628,5 +649,6 @@ document.querySelectorAll('.link-list').forEach(list => {
 window.addEventListener('resize', syncLinkCrescentHeights);
 
 syncPlanetSpeedsFromSlider();
+syncTrailLengthFromSlider();
 
 draw();
