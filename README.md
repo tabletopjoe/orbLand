@@ -33,7 +33,6 @@ You should see a sun at the center with a planet orbiting it and a moon orbiting
 - **Planet speed** – adjust orbit speed of the planet
 - **Moon speed** – adjust orbit speed of the moon
 - **Orbit trails** – toggle trails for planet and moon
-- **Elliptical tilt** – set orbit tilt (shared)
 - **Orbit radius** – adjust planet and moon orbit radii
 
 Click an icon to open its popover; click outside to close.

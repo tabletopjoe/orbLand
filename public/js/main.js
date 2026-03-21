@@ -52,7 +52,7 @@ let paused = false;
 let speedMultiplier = 1;
 let revealLevel = 0;
 const MAX_REVEAL_LEVEL = 4;
-const MAX_STARS = 92;
+const MAX_STARS = 460;
 let starCache = null;
 let starCacheSize = null;
 
@@ -115,7 +115,8 @@ function getStars() {
     stars.push({
       x: Math.random() * width,
       y: Math.random() * height,
-      brightness: 0.25 + Math.random() * 0.75
+      brightness: 0.04 + Math.random() * 0.96,
+      radius: 0.4 + Math.random() * 1.6
     });
   }
   starCache = stars;
@@ -131,10 +132,10 @@ function drawStars(ctx, sliderValue) {
   const starColor = getThemeColor('--star-color');
   for (let i = 0; i < count; i++) {
     const s = stars[i];
-    const alpha = s.brightness * intensity * 0.9;
+    const alpha = s.brightness * intensity;
     ctx.fillStyle = hexToRgba(starColor, alpha);
     ctx.beginPath();
-    ctx.arc(s.x, s.y, 1, 0, Math.PI * 2);
+    ctx.arc(s.x, s.y, s.radius ?? 1, 0, Math.PI * 2);
     ctx.fill();
   }
 }
@@ -309,13 +310,6 @@ document.getElementById('trails-slider').addEventListener('input', (e) => {
     jm.trailEnabled = enabled;
     if (!enabled) jm.trail = [];
   });
-});
-
-document.getElementById('tilt-slider').addEventListener('input', (e) => {
-  const val = Number(e.target.value) * Math.PI / 180;
-  planets.forEach(p => { p.orbitTilt = val; });
-  moon.orbitTilt = val;
-  jupiterMoons.forEach(jm => { jm.orbitTilt = val; });
 });
 
 document.getElementById('planet-radius-slider').addEventListener('input', (e) => {
