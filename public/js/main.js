@@ -420,18 +420,82 @@ function incrementReveal() {
   if (revealLevel < MAX_REVEAL_LEVEL) revealLevel++;
 }
 
+function syncLinkCrescentHeights() {
+  document.querySelectorAll('.link-row').forEach(row => {
+    const list = row.querySelector('.link-list');
+    const crescent = row.querySelector('.link-crescent');
+    if (!list || !crescent) return;
+    if (list.classList.contains('visible')) {
+      crescent.style.height = `${list.offsetHeight}px`;
+    } else {
+      crescent.style.height = '';
+    }
+  });
+}
+
+function closeAllLinkPanels() {
+  document.querySelectorAll('.link-list').forEach(list => {
+    list.classList.remove('visible');
+    list.setAttribute('aria-hidden', 'true');
+    list.setAttribute('inert', '');
+    const cat = list.dataset.category;
+    const b = document.getElementById(`link-category-${cat}`);
+    if (b) {
+      b.setAttribute('aria-expanded', 'false');
+      b.classList.remove('active');
+    }
+  });
+}
+
+function openLinkPanel(btn, list) {
+  list.classList.add('visible');
+  list.removeAttribute('inert');
+  list.setAttribute('aria-hidden', 'false');
+  btn.setAttribute('aria-expanded', 'true');
+  btn.classList.add('active');
+}
+
 document.querySelectorAll('.link-category').forEach(btn => {
   btn.addEventListener('click', () => {
     const category = btn.dataset.category;
     const list = document.getElementById(`link-list-${category}`);
-    document.querySelectorAll('.link-list').forEach(l => l.classList.remove('visible'));
-    document.querySelectorAll('.link-category').forEach(b => b.classList.remove('active'));
-    if (list) {
-      list.classList.add('visible');
-      btn.classList.add('active');
+    if (!list) return;
+
+    const wasOpen = btn.classList.contains('active') && list.classList.contains('visible');
+
+    if (wasOpen) {
+      closeAllLinkPanels();
+    } else {
+      closeAllLinkPanels();
+      openLinkPanel(btn, list);
     }
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(syncLinkCrescentHeights);
+    });
   });
 });
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = document.querySelector('.link-list.visible');
+  if (!open) return;
+  const cat = open.dataset.category;
+  const opener = document.getElementById(`link-category-${cat}`);
+  closeAllLinkPanels();
+  opener?.focus();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(syncLinkCrescentHeights);
+  });
+});
+
+document.querySelectorAll('.link-list').forEach(list => {
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncLinkCrescentHeights).observe(list);
+  }
+});
+
+window.addEventListener('resize', syncLinkCrescentHeights);
 
 syncPlanetSpeedsFromSlider();
 

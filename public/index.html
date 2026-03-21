@@ -14,10 +14,46 @@
     <div class="canvas-area">
     <canvas id="canvas"></canvas>
     <div class="link-panel-container">
-      <nav class="link-panel">
+      <nav class="link-panel" aria-label="Link categories">
         <div class="link-row">
-          <button type="button" class="link-category" data-category="references">References</button>
-          <div class="link-list" id="link-list-references" data-category="references">
+          <button type="button" id="link-category-references" class="link-category" data-category="references" aria-expanded="false" aria-controls="link-list-references">References</button>
+          <div class="link-crescent" aria-hidden="true">
+            <svg class="link-crescent-svg" viewBox="-11 0 131 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="crescent-grad-references" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fcfbf7" stop-opacity="0.85"/>
+                  <stop offset="55%" stop-color="#dcd8ce" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#a39e94" stop-opacity="0.05"/>
+                </linearGradient>
+                <filter id="crescent-blur-references" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+                </filter>
+                <linearGradient id="crescent-mask-sharp-grad-references" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="42%" stop-color="#fff"/>
+                  <stop offset="58%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="crescent-mask-blur-grad-references" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="42%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="58%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="crescent-mask-left-references" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-sharp-grad-references)"/>
+                </mask>
+                <mask id="crescent-mask-right-references" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-blur-grad-references)"/>
+                </mask>
+              </defs>
+              <g class="crescent-layers">
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-references)" mask="url(#crescent-mask-left-references)"/>
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-references)" mask="url(#crescent-mask-right-references)" filter="url(#crescent-blur-references)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="link-list" id="link-list-references" data-category="references" role="region" aria-labelledby="link-category-references" aria-hidden="true" inert>
             <a href="https://en.wikipedia.org" class="link-item" target="_blank" rel="noopener">Wikipedia</a>
             <a href="https://www.wikidata.org/wiki/Wikidata:Main_Page" class="link-item" target="_blank" rel="noopener">Wikidata</a>
             <a href="https://ourworldindata.org/" class="link-item" target="_blank" rel="noopener">OWD</a>
@@ -41,8 +77,44 @@
           </div>
         </div>
         <div class="link-row">
-          <button type="button" class="link-category" data-category="news">News</button>
-          <div class="link-list" id="link-list-news" data-category="news">
+          <button type="button" id="link-category-news" class="link-category" data-category="news" aria-expanded="false" aria-controls="link-list-news">News</button>
+          <div class="link-crescent" aria-hidden="true">
+            <svg class="link-crescent-svg" viewBox="-11 0 131 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="crescent-grad-news" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fcfbf7" stop-opacity="0.85"/>
+                  <stop offset="55%" stop-color="#dcd8ce" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#a39e94" stop-opacity="0.05"/>
+                </linearGradient>
+                <filter id="crescent-blur-news" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+                </filter>
+                <linearGradient id="crescent-mask-sharp-grad-news" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="42%" stop-color="#fff"/>
+                  <stop offset="58%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="crescent-mask-blur-grad-news" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="42%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="58%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="crescent-mask-left-news" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-sharp-grad-news)"/>
+                </mask>
+                <mask id="crescent-mask-right-news" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-blur-grad-news)"/>
+                </mask>
+              </defs>
+              <g class="crescent-layers">
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-news)" mask="url(#crescent-mask-left-news)"/>
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-news)" mask="url(#crescent-mask-right-news)" filter="url(#crescent-blur-news)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="link-list" id="link-list-news" data-category="news" role="region" aria-labelledby="link-category-news" aria-hidden="true" inert>
             <a href="https://www.propublica.org/" class="link-item" target="_blank" rel="noopener">ProPublica</a>
             <a href="https://www.democracydocket.com/" class="link-item" target="_blank" rel="noopener">Democracy Docket</a>
             <a href="https://www.motherjones.com/" class="link-item" target="_blank" rel="noopener">Mother Jones</a>
@@ -55,8 +127,44 @@
           </div>
         </div>
         <div class="link-row">
-          <button type="button" class="link-category" data-category="personal">Views</button>
-          <div class="link-list" id="link-list-personal" data-category="personal">
+          <button type="button" id="link-category-personal" class="link-category" data-category="personal" aria-expanded="false" aria-controls="link-list-personal">Views</button>
+          <div class="link-crescent" aria-hidden="true">
+            <svg class="link-crescent-svg" viewBox="-11 0 131 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="crescent-grad-personal" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fcfbf7" stop-opacity="0.85"/>
+                  <stop offset="55%" stop-color="#dcd8ce" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#a39e94" stop-opacity="0.05"/>
+                </linearGradient>
+                <filter id="crescent-blur-personal" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+                </filter>
+                <linearGradient id="crescent-mask-sharp-grad-personal" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="42%" stop-color="#fff"/>
+                  <stop offset="58%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="crescent-mask-blur-grad-personal" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="42%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="58%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="crescent-mask-left-personal" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-sharp-grad-personal)"/>
+                </mask>
+                <mask id="crescent-mask-right-personal" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-blur-grad-personal)"/>
+                </mask>
+              </defs>
+              <g class="crescent-layers">
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-personal)" mask="url(#crescent-mask-left-personal)"/>
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-personal)" mask="url(#crescent-mask-right-personal)" filter="url(#crescent-blur-personal)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="link-list" id="link-list-personal" data-category="personal" role="region" aria-labelledby="link-category-personal" aria-hidden="true" inert>
             <a href="https://granta.com/" class="link-item" target="_blank" rel="noopener">Granta</a>
             <a href="https://www.theparisreview.org/" class="link-item" target="_blank" rel="noopener">The Paris Review</a>
             <a href="https://kenyonreview.org/" class="link-item" target="_blank" rel="noopener">Kenyon Review</a>
@@ -72,8 +180,44 @@
           </div>
         </div>
         <div class="link-row">
-          <button type="button" class="link-category" data-category="tools">Tools</button>
-          <div class="link-list" id="link-list-tools" data-category="tools">
+          <button type="button" id="link-category-tools" class="link-category" data-category="tools" aria-expanded="false" aria-controls="link-list-tools">Tools</button>
+          <div class="link-crescent" aria-hidden="true">
+            <svg class="link-crescent-svg" viewBox="-11 0 131 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="crescent-grad-tools" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fcfbf7" stop-opacity="0.85"/>
+                  <stop offset="55%" stop-color="#dcd8ce" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#a39e94" stop-opacity="0.05"/>
+                </linearGradient>
+                <filter id="crescent-blur-tools" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+                </filter>
+                <linearGradient id="crescent-mask-sharp-grad-tools" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="42%" stop-color="#fff"/>
+                  <stop offset="58%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="crescent-mask-blur-grad-tools" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="42%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="58%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="crescent-mask-left-tools" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-sharp-grad-tools)"/>
+                </mask>
+                <mask id="crescent-mask-right-tools" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-blur-grad-tools)"/>
+                </mask>
+              </defs>
+              <g class="crescent-layers">
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-tools)" mask="url(#crescent-mask-left-tools)"/>
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-tools)" mask="url(#crescent-mask-right-tools)" filter="url(#crescent-blur-tools)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="link-list" id="link-list-tools" data-category="tools" role="region" aria-labelledby="link-category-tools" aria-hidden="true" inert>
             <a href="https://developer.mozilla.org/" class="link-item" target="_blank" rel="noopener">MDN</a>
             <a href="https://regex101.com/" class="link-item" target="_blank" rel="noopener">Regex101</a>
             <a href="https://jsonformatter.org/" class="link-item" target="_blank" rel="noopener">JSON Formatter</a>
@@ -87,8 +231,44 @@
           </div>
         </div>
         <div class="link-row">
-          <button type="button" class="link-category" data-category="music">Music</button>
-          <div class="link-list" id="link-list-music" data-category="music">
+          <button type="button" id="link-category-music" class="link-category" data-category="music" aria-expanded="false" aria-controls="link-list-music">Music</button>
+          <div class="link-crescent" aria-hidden="true">
+            <svg class="link-crescent-svg" viewBox="-11 0 131 200" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="crescent-grad-music" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fcfbf7" stop-opacity="0.85"/>
+                  <stop offset="55%" stop-color="#dcd8ce" stop-opacity="0.28"/>
+                  <stop offset="100%" stop-color="#a39e94" stop-opacity="0.05"/>
+                </linearGradient>
+                <filter id="crescent-blur-music" x="-35%" y="-35%" width="170%" height="170%" color-interpolation-filters="sRGB">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="1.5"/>
+                </filter>
+                <linearGradient id="crescent-mask-sharp-grad-music" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff"/>
+                  <stop offset="42%" stop-color="#fff"/>
+                  <stop offset="58%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+                <linearGradient id="crescent-mask-blur-grad-music" x1="-11" y1="0" x2="20" y2="0" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="42%" stop-color="#fff" stop-opacity="0"/>
+                  <stop offset="58%" stop-color="#fff"/>
+                  <stop offset="100%" stop-color="#fff"/>
+                </linearGradient>
+                <mask id="crescent-mask-left-music" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-sharp-grad-music)"/>
+                </mask>
+                <mask id="crescent-mask-right-music" maskUnits="userSpaceOnUse" x="-11" y="0" width="131" height="200">
+                  <rect x="-11" y="0" width="131" height="200" fill="url(#crescent-mask-blur-grad-music)"/>
+                </mask>
+              </defs>
+              <g class="crescent-layers">
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-music)" mask="url(#crescent-mask-left-music)"/>
+                <path d="M 20 2 C -11 50 -11 150 20 198 C 10 150 10 50 20 2 Z" fill="url(#crescent-grad-music)" mask="url(#crescent-mask-right-music)" filter="url(#crescent-blur-music)"/>
+              </g>
+            </svg>
+          </div>
+          <div class="link-list" id="link-list-music" data-category="music" role="region" aria-labelledby="link-category-music" aria-hidden="true" inert>
             <a href="https://app.radiooooo.com/" class="link-item" target="_blank" rel="noopener">Radiooooo</a>
             <a href="https://radio.garden/" class="link-item" target="_blank" rel="noopener">Radio Garden</a>
             <a href="https://www.nts.live/" class="link-item" target="_blank" rel="noopener">NTS</a>
