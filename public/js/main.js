@@ -8,18 +8,23 @@ function getThemeColor(varName) {
 }
 
 const sun = {
-  radius: 27,
+  radius: 21.6,
   get color() { return getThemeColor('--sun-color'); }
 };
 
-const ORBIT_RATIOS = { mercury: 0.387, venus: 0.723, earth: 1.0, mars: 1.524, jupiter: 5.203 };
-// revealLevel: 0=Mercury,Venus | 1=+Earth | 2=+moon | 3=+Mars | 4=+Jupiter+moons
+// AU only for Kepler-like orbit speeds (not for orbit radius)
+const PLANET_AU = [0.387, 0.723, 1.0, 1.524, 5.203, 9.537, 19.191, 30.069, 39.48];
+// revealLevel: 0=Mercury,Venus | 1=Earth | 2=moon | 3=Mars | 4=Jupiter+moons | 5–8=Saturn..Pluto
 const planets = [
-  { radius: 6, orbitRadius: 115 * ORBIT_RATIOS.mercury, orbitSpeed: 0.016, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-inner-color'); } },
-  { radius: 8, orbitRadius: 115 * ORBIT_RATIOS.venus, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-venus-color'); } },
-  { radius: 9, orbitRadius: 115, orbitSpeed: 0.01, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 1, get color() { return getThemeColor('--planet-color'); } },
-  { radius: 7, orbitRadius: 115 * ORBIT_RATIOS.mars, orbitSpeed: 0.008, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 3, get color() { return getThemeColor('--planet-outer-color'); } },
-  { radius: 11, orbitRadius: 115 * ORBIT_RATIOS.jupiter, orbitSpeed: 0.0044, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 4, get color() { return getThemeColor('--planet-jupiter-color'); } }
+  { radius: 6, orbitRadius: 44, orbitSpeed: 0.016, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-inner-color'); } },
+  { radius: 8, orbitRadius: 52, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0, get color() { return getThemeColor('--planet-venus-color'); } },
+  { radius: 9, orbitRadius: 60, orbitSpeed: 0.01, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 1, get color() { return getThemeColor('--planet-color'); } },
+  { radius: 7, orbitRadius: 68, orbitSpeed: 0.008, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 3, get color() { return getThemeColor('--planet-outer-color'); } },
+  { radius: 11, orbitRadius: 76, orbitSpeed: 0.0044, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 4, get color() { return getThemeColor('--planet-jupiter-color'); } },
+  { radius: 10, orbitRadius: 84, orbitSpeed: 0.0035, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 5, get color() { return getThemeColor('--planet-saturn-color'); } },
+  { radius: 8, orbitRadius: 92, orbitSpeed: 0.003, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 6, get color() { return getThemeColor('--planet-uranus-color'); } },
+  { radius: 8, orbitRadius: 100, orbitSpeed: 0.0028, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 7, get color() { return getThemeColor('--planet-neptune-color'); } },
+  { radius: 5, orbitRadius: 108, orbitSpeed: 0.0025, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 8, get color() { return getThemeColor('--planet-pluto-color'); } }
 ];
 const middlePlanetIndex = 2;
 const MOON_REVEAL_LEVEL = 2;
@@ -51,7 +56,8 @@ const jupiterMoons = [
 let paused = false;
 let speedMultiplier = 1;
 let revealLevel = 0;
-const MAX_REVEAL_LEVEL = 4;
+const MAX_REVEAL_LEVEL = 8;
+let orbitRadiusScale = 1;
 const MAX_STARS = 460;
 let starCache = null;
 let starCacheSize = null;
@@ -63,12 +69,26 @@ function getCanvasDimensions() {
   return { width: Math.max(1, w), height: Math.max(1, h) };
 }
 
+function applyUniformOrbitRadii() {
+  const { width, height } = getCanvasDimensions();
+  const outerMargin = 24;
+  let maxR = Math.min(width, height) / 2 - outerMargin;
+  const minR = 36;
+  if (maxR < minR + 32) maxR = minR + 32;
+  const gap = (maxR - minR) / 8;
+  for (let i = 0; i < planets.length; i++) {
+    planets[i].orbitRadius = (minR + i * gap) * orbitRadiusScale;
+  }
+}
+
 function resizeCanvas() {
   const { width, height } = getCanvasDimensions();
   canvas.width = width;
   canvas.height = height;
   starCache = null;
+  applyUniformOrbitRadii();
 }
+orbitRadiusScale = Number(document.getElementById('planet-radius-slider').value) / 115;
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
@@ -246,7 +266,7 @@ function draw() {
     moon.trail = [];
   }
 
-  if (revealLevel >= MAX_REVEAL_LEVEL) {
+  if (revealLevel >= 4) {
   jupiterMoons.forEach(jm => {
     if (!paused) {
       jm.orbitAngle += jm.orbitSpeed * speedMultiplier;
@@ -280,15 +300,15 @@ document.getElementById('speed-multiplier-slider').addEventListener('input', (e)
   speedMultiplier = val / 100;
 });
 
-document.getElementById('planet-speed-slider').addEventListener('input', (e) => {
-  const val = Number(e.target.value);
+function syncPlanetSpeedsFromSlider() {
+  const val = Number(document.getElementById('planet-speed-slider').value);
   const earthSpeed = 0.005 + (val - 5) / 45 * 0.045;
-  planets[2].orbitSpeed = earthSpeed;
-  planets[0].orbitSpeed = earthSpeed * Math.sqrt(1 / ORBIT_RATIOS.mercury);
-  planets[1].orbitSpeed = earthSpeed * Math.sqrt(1 / ORBIT_RATIOS.venus);
-  planets[3].orbitSpeed = earthSpeed * Math.sqrt(1 / ORBIT_RATIOS.mars);
-  planets[4].orbitSpeed = earthSpeed * Math.sqrt(1 / ORBIT_RATIOS.jupiter);
-});
+  planets.forEach((p, i) => {
+    p.orbitSpeed = earthSpeed / Math.sqrt(PLANET_AU[i]);
+  });
+}
+
+document.getElementById('planet-speed-slider').addEventListener('input', syncPlanetSpeedsFromSlider);
 
 document.getElementById('moon-speed-slider').addEventListener('input', (e) => {
   const val = Number(e.target.value);
@@ -313,12 +333,8 @@ document.getElementById('trails-slider').addEventListener('input', (e) => {
 });
 
 document.getElementById('planet-radius-slider').addEventListener('input', (e) => {
-  const val = Number(e.target.value);
-  planets[0].orbitRadius = val * ORBIT_RATIOS.mercury;
-  planets[1].orbitRadius = val * ORBIT_RATIOS.venus;
-  planets[2].orbitRadius = val;
-  planets[3].orbitRadius = val * ORBIT_RATIOS.mars;
-  planets[4].orbitRadius = val * ORBIT_RATIOS.jupiter;
+  orbitRadiusScale = Number(e.target.value) / 115;
+  applyUniformOrbitRadii();
 });
 
 document.getElementById('moon-radius-slider').addEventListener('input', (e) => {
@@ -354,6 +370,10 @@ document.getElementById('random-colors-btn').addEventListener('click', () => {
   document.documentElement.style.setProperty('--planet-color', randomHex());
   document.documentElement.style.setProperty('--planet-outer-color', randomHex());
   document.documentElement.style.setProperty('--planet-jupiter-color', randomHex());
+  document.documentElement.style.setProperty('--planet-saturn-color', randomHex());
+  document.documentElement.style.setProperty('--planet-uranus-color', randomHex());
+  document.documentElement.style.setProperty('--planet-neptune-color', randomHex());
+  document.documentElement.style.setProperty('--planet-pluto-color', randomHex());
   document.documentElement.style.setProperty('--moon-color', randomHex());
   document.documentElement.style.setProperty('--moon-io-color', randomHex());
   document.documentElement.style.setProperty('--moon-europa-color', randomHex());
@@ -367,24 +387,31 @@ function isClickOnSun(canvasX, canvasY) {
   return Math.sqrt((canvasX - cx) ** 2 + (canvasY - cy) ** 2) <= sun.radius;
 }
 
-canvas.addEventListener('click', (e) => {
+function canvasCoordsFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
   const scaleX = canvas.width / rect.width;
   const scaleY = canvas.height / rect.height;
-  const canvasX = (e.clientX - rect.left) * scaleX;
-  const canvasY = (e.clientY - rect.top) * scaleY;
-  if (isClickOnSun(canvasX, canvasY)) {
-    paused = !paused;
+  return {
+    x: (e.clientX - rect.left) * scaleX,
+    y: (e.clientY - rect.top) * scaleY
+  };
+}
+
+document.addEventListener('click', (e) => {
+  if (e.target.closest('.slider-float')) return;
+  if (e.target === canvas || e.target.closest('#canvas')) {
+    const { x, y } = canvasCoordsFromEvent(e);
+    if (isClickOnSun(x, y)) {
+      paused = !paused;
+      return;
+    }
   }
+  incrementReveal();
 });
 
 canvas.addEventListener('mousemove', (e) => {
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const canvasX = (e.clientX - rect.left) * scaleX;
-  const canvasY = (e.clientY - rect.top) * scaleY;
-  canvas.style.cursor = isClickOnSun(canvasX, canvasY) ? 'pointer' : 'default';
+  const { x, y } = canvasCoordsFromEvent(e);
+  canvas.style.cursor = isClickOnSun(x, y) ? 'pointer' : 'default';
 });
 
 updateUiColorsForBg(Number(document.getElementById('bg-slider').value));
@@ -403,9 +430,9 @@ document.querySelectorAll('.link-category').forEach(btn => {
       list.classList.add('visible');
       btn.classList.add('active');
     }
-    incrementReveal();
   });
 });
 
+syncPlanetSpeedsFromSlider();
 
 draw();
