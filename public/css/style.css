@@ -231,6 +231,42 @@ body {
   pointer-events: auto;
 }
 
+.slider-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slider-float--controls-hidden .slider-controls {
+  display: none;
+}
+
+.controls-visibility-icon-slot {
+  position: relative;
+  display: block;
+  width: 20.328px;
+  height: 41.382px;
+  flex-shrink: 0;
+}
+
+.controls-visibility-icon-slot .controls-visibility-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 20.328px;
+  height: 41.382px;
+}
+
+.slider-float:not(.slider-float--controls-hidden) .controls-visibility-icon--pill {
+  display: none;
+}
+
+.slider-float--controls-hidden .controls-visibility-icon--full {
+  display: none;
+}
+
 .icon-btn {
   width: var(--thumb-size);
   height: var(--thumb-size);
@@ -253,6 +289,19 @@ body {
   outline: 2px solid var(--ui-hover);
   outline-offset: 3px;
   border-radius: 50%;
+}
+
+.icon-btn.icon-btn--controls-toggle {
+  width: 20.328px;
+  height: 41.382px;
+  min-height: 41.382px;
+  border-radius: 999px;
+  overflow: visible;
+  flex-shrink: 0;
+}
+
+.icon-btn.icon-btn--controls-toggle:focus-visible {
+  border-radius: 999px;
 }
 
 .vertical-slider:focus-visible {

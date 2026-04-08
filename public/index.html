@@ -72,8 +72,7 @@
             <a href="https://fred.stlouisfed.org/" class="link-item" target="_blank" rel="noopener">FRED</a>
             <a href="https://data.worldbank.org/" class="link-item" target="_blank" rel="noopener">World Bank Data</a>
             <a href="https://www.bellingcat.com/" class="link-item" target="_blank" rel="noopener">Bellingcat</a>
-            <a href="https://www.adsbexchange.com/" class="link-item" target="_blank" rel="noopener">ADSB Exchange</a>
-            <a href="https://www.broadcastify.com/listen/" class="link-item" target="_blank" rel="noopener">Broadcastify</a>
+            <a href="https://www.adsbexchange.com/" class="link-item" target="_blank" rel="noopener">ADSB Exchange</a>        
           </div>
         </div>
         <div class="link-row">
@@ -273,6 +272,7 @@
             <a href="https://radio.garden/" class="link-item" target="_blank" rel="noopener">Radio Garden</a>
             <a href="https://www.nts.live/" class="link-item" target="_blank" rel="noopener">NTS</a>
             <a href="https://somafm.com/" class="link-item" target="_blank" rel="noopener">SomaFM</a>
+            <a href="https://www.broadcastify.com/listen/" class="link-item" target="_blank" rel="noopener">Broadcastify</a>
             <a href="https://www.short-wave.info/" class="link-item" target="_blank" rel="noopener">Short Wave</a>
             <a href="https://riverwalkjazz.stanford.edu/" class="link-item" target="_blank" rel="noopener">Riverwalk Jazz</a>
             <a href="https://www.accuradio.com/channel/dixieland/1490/" class="link-item" target="_blank" rel="noopener">AccuRadio Hot</a>
@@ -281,7 +281,18 @@
         </div>
        </nav>
     </div>
-    <div class="slider-float">
+    <div class="slider-float slider-float--controls-hidden" id="slider-float">
+      <button type="button" class="icon-btn icon-btn--controls-toggle" id="controls-visibility-btn" aria-expanded="false" aria-controls="slider-controls" aria-label="Show controls">
+        <span class="controls-visibility-icon-slot" aria-hidden="true">
+          <svg class="controls-visibility-icon controls-visibility-icon--full" width="20.328" height="41.382" viewBox="0 -2 42 85.5" fill="none" stroke-linecap="round" stroke-linejoin="round" overflow="visible"><circle cx="21" cy="41.25" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+          <svg class="controls-visibility-icon controls-visibility-icon--pill" width="20.328" height="41.382" viewBox="0 -2 42 85.5" fill="none" stroke-linecap="round" stroke-linejoin="round" overflow="visible">
+            <rect x="2.4" y="0" width="37.2" height="82.5" rx="18.6" ry="18.6" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="21" cy="24.25" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+            <circle cx="21" cy="58.25" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+          </svg>
+        </span>
+      </button>
+      <div class="slider-controls" id="slider-controls">
       <button type="button" class="icon-btn random-colors-btn" id="random-colors-btn" aria-label="Random thematic planet colors">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="1.5" fill="currentColor"/><circle cx="17" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="17" r="1.5" fill="currentColor"/><circle cx="7" cy="12" r="1.5" fill="currentColor"/></svg>
       </button>
@@ -316,6 +327,7 @@
       <div class="slider-cell">
         <label for="bg-slider">Bg</label>
         <div class="slider-wrap"><input type="range" id="bg-slider" class="vertical-slider" min="0" max="100" value="4" aria-label="Background color"></div>
+      </div>
       </div>
     </div>
     </div>
