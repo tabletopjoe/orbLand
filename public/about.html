@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, noarchive">
+  <meta name="description" content="That which exalts us is dearer to us than ten-thousand truths.">
+  <title>Michael M. Schlenker — Web Developer</title>
+  <link rel="stylesheet" href="/css/resume.css">
+</head>
+<body class="about-body">
+  <main class="wrap">
+    <header class="header">
+      <div class="identity">
+        <div class="nameRow">
+          <canvas id="pinwheel" width="64" height="64" aria-hidden="true"></canvas>
+          <h1>Michael M. Schlenker</h1>
+        </div>
+        <p class="muted">Web Developer · Northern Virginia</p>
+      </div>
+
+      <nav class="links" aria-label="Primary">
+        <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
+        <a href="https://linkedin.com/in/yourhandle" target="_blank" rel="noreferrer">LinkedIn</a>
+        <a href="/resume.pdf">Resume (PDF)</a>
+        <a href="mailto:schlenkermm@gmail.com">schlenkermm@gmail.com</a>
+        <button id="themeToggle" class="iconBtn" type="button" aria-label="Toggle theme" title="Toggle theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </nav>
+    </header>
+
+    <section class="section">
+      <h2>Summary</h2>
+      <p>That which exalts us is dearer to us than ten-thousand truths.</p>
+    </section>
+
+    <section class="section">
+      <h2>Experience</h2>
+      <div class="stack">
+        <article class="block">
+          <div class="row">
+            <div>
+              <h3>Application Developer</h3>
+              <p class="muted">NASA - ASRC Federal</p>
+            </div>
+            <p class="muted">2022 - Present</p>
+          </div>
+          <ul>
+            <li>Built production apps and automations for Microsoft 365 environments.</li>
+            <li>Designed data models, permissions, and UI patterns that non-technical users can operate.</li>
+            <li>Shipped quickly without turning everything into a science project.</li>
+          </ul>
+        </article>
+
+        <article class="block">
+          <div class="row">
+            <div>
+              <h3>Senior SharePoint Developer</h3>
+              <p class="muted">Department of State OIG - Buchanan Edwards</p>
+            </div>
+            <p class="muted">2016 - 2022</p>
+          </div>
+          <ul>
+            <li>Built production apps and automations for Microsoft 365 environments.</li>
+            <li>Designed data models, permissions, and UI patterns that non-technical users can operate.</li>
+            <li>Shipped quickly without turning everything into a science project.</li>
+          </ul>
+        </article>
+
+        <article class="block">
+          <div class="row">
+            <div>
+              <h3>Compliance Analyst</h3>
+              <p class="muted">Department of State OIG - Miracle Systems</p>
+            </div>
+            <p class="muted">2014 - 2016</p>
+          </div>
+          <ul>
+            <li>Built production apps and automations for Microsoft 365 environments.</li>
+            <li>Designed data models, permissions, and UI patterns that non-technical users can operate.</li>
+            <li>Shipped quickly without turning everything into a science project.</li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Projects</h2>
+      <div class="grid">
+        <a class="card" href="#" rel="noreferrer">
+          <div class="cardTop">
+            <h3>Project One</h3>
+            <span class="arrow" aria-hidden="true">↗</span>
+          </div>
+          <p class="muted">Short description. What it does, who it’s for, what you used.</p>
+          <div class="tags" aria-label="Tech stack">
+            <span class="tag">Astro</span>
+            <span class="tag">CSS</span>
+            <span class="tag">Node</span>
+          </div>
+        </a>
+        <a class="card" href="#" rel="noreferrer">
+          <div class="cardTop">
+            <h3>Project Two</h3>
+            <span class="arrow" aria-hidden="true">↗</span>
+          </div>
+          <p class="muted">Short description. Emphasize outcomes and constraints.</p>
+          <div class="tags" aria-label="Tech stack">
+            <span class="tag">Power Platform</span>
+            <span class="tag">SharePoint</span>
+            <span class="tag">Graph API</span>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer muted">
+      <p>© <span id="resume-year"></span> Michael M. Schlenker</p>
+      <p><a class="about-back" href="/">← Back to orbLand</a></p>
+    </footer>
+  </main>
+
+  <script src="/js/resume.js" defer></script>
+  <script>
+    document.getElementById('resume-year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
