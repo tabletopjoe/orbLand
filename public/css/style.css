@@ -404,6 +404,15 @@ body {
     max-width: min(11rem, calc(100vw - 5.5rem));
   }
 
+  /* Open list stacks above fixed controls; single-category mode hides other rows */
+  .link-panel-container:has(.link-list.visible) {
+    z-index: 20;
+  }
+
+  .link-panel:has(.link-list.visible) .link-row:not(:has(.link-list.visible)) {
+    display: none;
+  }
+
   .link-category {
     font-size: 0.8rem;
     padding: 0.4rem 0;

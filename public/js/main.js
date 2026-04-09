@@ -88,6 +88,13 @@ let speedMultiplier = 1;
 let revealLevel = 0;
 const MAX_REVEAL_LEVEL = 8;
 let orbitRadiusScale = 1;
+/** Visual scale for sun/planets/moons vs CSS breakpoint (matches style.css max-width: 640px). */
+let solarViewScale = 1;
+
+function refreshSolarViewScale() {
+  solarViewScale = window.matchMedia('(max-width: 640px)').matches ? 0.5 : 1;
+}
+
 const MAX_STARS = 460;
 let starCache = null;
 let starCacheSize = null;
@@ -112,6 +119,7 @@ function applyUniformOrbitRadii() {
 }
 
 function resizeCanvas() {
+  refreshSolarViewScale();
   const { width, height } = getCanvasDimensions();
   canvas.width = width;
   canvas.height = height;
@@ -121,6 +129,11 @@ function resizeCanvas() {
 orbitRadiusScale = Number(document.getElementById('planet-radius-slider').value) / 115;
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
+try {
+  window.matchMedia('(max-width: 640px)').addEventListener('change', refreshSolarViewScale);
+} catch (_) {
+  window.matchMedia('(max-width: 640px)').addListener(refreshSolarViewScale);
+}
 
 function ellipsePosition(orbitAngle, orbitRadius, ellipticity, orbitTilt = 0) {
   const radiusY = orbitRadius * (1 - ellipticity / 100);
@@ -224,6 +237,11 @@ function draw() {
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
 
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.scale(solarViewScale, solarViewScale);
+  ctx.translate(-cx, -cy);
+
   const sunGradient = ctx.createRadialGradient(
     cx - sun.radius * 0.3, cy - sun.radius * 0.3, 0,
     cx, cy, sun.radius
@@ -326,6 +344,8 @@ function draw() {
     ctx.fill();
   });
   }
+
+  ctx.restore();
 
   requestAnimationFrame(draw);
 }
@@ -543,7 +563,7 @@ document.getElementById('random-colors-btn').addEventListener('click', () => {
 function isClickOnSun(canvasX, canvasY) {
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
-  return Math.sqrt((canvasX - cx) ** 2 + (canvasY - cy) ** 2) <= sun.radius;
+  return Math.sqrt((canvasX - cx) ** 2 + (canvasY - cy) ** 2) <= sun.radius * solarViewScale;
 }
 
 function canvasCoordsFromEvent(e) {
