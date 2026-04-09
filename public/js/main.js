@@ -412,18 +412,6 @@ document.getElementById('bg-slider').addEventListener('input', (e) => {
   updateUiColorsForBg(Number(e.target.value));
 });
 
-/** Keeps the controls toggle fixed when collapsing: reserve expanded stack height. */
-function updateSliderFloatAnchorHeight() {
-  const float = document.getElementById('slider-float');
-  if (!float) return;
-  const wasHidden = float.classList.contains('slider-float--controls-hidden');
-  float.classList.remove('slider-float--controls-hidden');
-  void float.offsetHeight;
-  const h = float.offsetHeight;
-  float.style.minHeight = `${h}px`;
-  if (wasHidden) float.classList.add('slider-float--controls-hidden');
-}
-
 document.getElementById('controls-visibility-btn').addEventListener('click', () => {
   const float = document.getElementById('slider-float');
   const btn = document.getElementById('controls-visibility-btn');
@@ -432,9 +420,6 @@ document.getElementById('controls-visibility-btn').addEventListener('click', () 
   btn.setAttribute('aria-expanded', String(!hidden));
   btn.setAttribute('aria-label', hidden ? 'Show controls' : 'Hide controls');
 });
-
-window.addEventListener('resize', updateSliderFloatAnchorHeight);
-
 
 /**
  * HSL (0–360, 0–1, 0–1) → { r, g, b } 0–255
@@ -673,11 +658,5 @@ window.addEventListener('resize', syncLinkCrescentHeights);
 
 syncPlanetSpeedsFromSlider();
 syncTrailLengthFromSlider();
-
-requestAnimationFrame(() => {
-  requestAnimationFrame(() => {
-    updateSliderFloatAnchorHeight();
-  });
-});
 
 draw();

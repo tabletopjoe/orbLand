@@ -216,15 +216,22 @@ body {
 }
 
 .slider-float {
+  --slider-float-top: max(1rem, env(safe-area-inset-top, 0px));
+  --slider-float-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+  --slider-float-right: max(1rem, env(safe-area-inset-right, 0px));
   position: fixed;
-  top: 1rem;
-  right: 1rem;
+  top: var(--slider-float-top);
+  right: var(--slider-float-right);
+  bottom: var(--slider-float-bottom);
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: flex-start;
   gap: 0.5rem;
   pointer-events: none;
+  min-height: 0;
+  box-sizing: border-box;
 }
 
 .slider-float > * {
@@ -236,6 +243,13 @@ body {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .slider-float--controls-hidden .slider-controls {
@@ -332,6 +346,8 @@ body {
 }
 
 .slider-wrap {
+  container-type: size;
+  /* Default track height; narrow viewports override with a vh-derived cap */
   height: 66px;
   width: var(--thumb-size);
   display: flex;
@@ -366,5 +382,80 @@ body {
   border: none;
   border-radius: 50%;
   cursor: pointer;
+}
+
+/* When the wrap is shorter than the default 66px track, scale the rotated range input to fit */
+@container (max-height: 65px) {
+  .slider-wrap .vertical-slider {
+    transform: rotate(-90deg) scale(min(1, calc(100cqh / 66px)));
+  }
+}
+
+/* Phones and narrow viewports: safe areas, compact edges, touch-friendly thumbs */
+@media (max-width: 640px) {
+  :root {
+    --thumb-size: 18px;
+  }
+
+  .link-panel-container {
+    left: max(0.5rem, env(safe-area-inset-left, 0px));
+    top: max(0.5rem, env(safe-area-inset-top, 0px));
+    transform: none;
+    max-width: min(11rem, calc(100vw - 5.5rem));
+  }
+
+  .link-category {
+    font-size: 0.8rem;
+    padding: 0.4rem 0;
+  }
+
+  .link-category:hover,
+  .link-category.active {
+    font-size: 0.85rem;
+  }
+
+  .link-item {
+    font-size: 0.75rem;
+    max-width: none;
+    white-space: normal;
+  }
+
+  /* Drop lists below the row so they stay on-screen; hide crescent (desktop-only flourish) */
+  .link-crescent {
+    display: none !important;
+  }
+
+  .link-list,
+  .link-list.visible {
+    position: absolute;
+    left: 0;
+    top: 100%;
+    margin-left: 0;
+    margin-top: 0.35rem;
+    min-width: min(14rem, calc(100vw - 1.25rem));
+    max-width: calc(100vw - 1.25rem);
+    transform: none;
+    z-index: 5;
+  }
+
+  .slider-float {
+    --slider-float-top: max(0.5rem, env(safe-area-inset-top, 0px));
+    --slider-float-right: max(0.5rem, env(safe-area-inset-right, 0px));
+    --slider-float-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+    gap: 0.35rem;
+  }
+
+  .slider-controls {
+    gap: 0.35rem;
+  }
+
+  .slider-cell {
+    gap: 0.2rem;
+  }
+
+  /* Shorter tracks on small viewports so more rows fit before scrolling (~1/11 of viewport minus chrome) */
+  .slider-wrap {
+    height: min(66px, max(34px, calc((100dvh - 11.5rem) / 11)));
+  }
 }
 
