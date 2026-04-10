@@ -162,6 +162,9 @@ a:hover {
   text-transform: uppercase;
   color: var(--muted);
 }
+.section .stack + h2 {
+  margin-top: var(--s4);
+}
 
 .stack {
   display: grid;
