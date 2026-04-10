@@ -24,9 +24,9 @@
 /* Light theme overrides */
 :root[data-theme="light"] {
   --bg: #f7f7fb;
-  --fg: rgba(5, 71, 42, 1);
-  --muted: #4d6443;
-  --line: rgba(5, 71, 42, 0.19);
+  --fg: #1a2e24;
+  --muted: #355a42;
+  --line: rgba(26, 46, 36, 0.22);
   --card: rgba(0, 0, 0, 0.04);
   --card-hover: rgba(0, 0, 0, 0.06);
   --line-hover: rgba(0, 0, 0, 0.12);
@@ -193,6 +193,13 @@ ul {
 }
 li {
   margin: 0.25rem 0;
+}
+.block ul ul {
+  margin: 0.35rem 0 0 1rem;
+  list-style-type: circle;
+}
+.block ul ul li {
+  margin: 0.2rem 0;
 }
 
 .grid {

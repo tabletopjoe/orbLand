@@ -1,5 +1,5 @@
 /**
- * Resume /about page: theme toggle + pinwheel canvas (from resumeProj1).
+ * Resume /about page: theme toggle + pinwheel canvas 
  */
 (() => {
   const root = document.documentElement;

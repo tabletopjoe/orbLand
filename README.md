@@ -1,6 +1,6 @@
 # orbLand
 
-Minimal home page links with interactive solar system toy.
+Minimal home page links with interactive solar system toy. Work in progress.
 
 ## Getting Started
 
@@ -28,7 +28,7 @@ You should see a sun at the center with a planet orbiting it and a moon orbiting
 
 ## Controls
 
-35px icons along the right edge of the canvas:
+35px icons along the right edge of the canvas, revealed after clicking control toggle in upper-right corner. 
 
 - **Planet speed** – adjust orbit speed of the planet
 - **Moon speed** – adjust orbit speed of the moon
