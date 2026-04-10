@@ -118,3 +118,11 @@
     window.print();
   });
 })();
+
+(() => {
+  const back = document.querySelector('.about-back');
+  if (!back) return;
+  back.addEventListener('click', () => {
+    sessionStorage.setItem('orbShowAboutLink', '1');
+  });
+})();

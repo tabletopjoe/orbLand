@@ -582,7 +582,8 @@ function syncAboutLinkVisibility() {
   const el = document.getElementById('about-link');
   if (!el) return;
   const starsAtMax = Number(document.getElementById('stars-slider').value) === 100;
-  el.hidden = !(starsAtMax && paused);
+  const fromAboutReturn = sessionStorage.getItem('orbShowAboutLink') === '1';
+  el.hidden = !((starsAtMax && paused) || fromAboutReturn);
 }
 
 document.addEventListener('click', (e) => {
