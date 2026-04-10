@@ -10,21 +10,21 @@
 </head>
 <body class="about-body">
   <main class="wrap">
-    <header class="header">
+    <header class="header no-print">
       <div class="identity">
         <div class="nameRow">
-          <canvas id="pinwheel" width="64" height="64" aria-hidden="true"></canvas>
+          <canvas id="pinwheel" class="no-print" width="64" height="64" aria-hidden="true"></canvas>
           <h1>Michael M. Schlenker</h1>
         </div>
         <p class="muted">Web Developer · Northern Virginia</p>
       </div>
 
       <nav class="links" aria-label="Primary">
-        <a href="https://github.com/tabletopjoe" target="_blank" rel="noreferrer">GitHub</a>
-        <a href="https://www.linkedin.com/in/michael-schlenker-8205a21a/" target="_blank" rel="noreferrer">LinkedIn</a>
-        <a href="/resume.pdf">Resume (PDF)</a>
+        <a href="https://github.com/tabletopjoe" target="_blank" rel="noreferrer" class="no-print">GitHub</a>
+        <a href="https://www.linkedin.com/in/michael-schlenker-8205a21a/" target="_blank" rel="noreferrer" class="no-print">LinkedIn</a>
+        <a href="#" id="resumePdf" class="no-print" title="Opens the print dialog — choose Save as PDF">Resume (PDF)</a>
         <a href="mailto:schlenkermm@gmail.com">schlenkermm@gmail.com</a>
-        <button id="themeToggle" class="iconBtn" type="button" aria-label="Toggle theme" title="Toggle theme">
+        <button id="themeToggle" class="iconBtn no-print" type="button" aria-label="Toggle theme" title="Toggle theme">
           <span aria-hidden="true">◐</span>
         </button>
       </nav>
@@ -32,7 +32,7 @@
 
     <section class="section">
       <h2>Summary</h2>
-      <p> Problem solver with a love of history, epistemology, and system design. I build custom Power Platform solutions in Microsoft 365
+      <p> Problem solver with limitless curiosity and a love of system design. I build custom Power Platform solutions in Microsoft 365
         cloud and on-prem environments. I help teams formalize business processes into automated systems that improve efficiencies,
         reduce friction, and increase transparency.
       </p>
@@ -45,7 +45,7 @@
         <article class="block">
           <div class="row">
             <div>
-              <h3>Application Developer, Mission Support Directorate</h3>
+              <h3>Application Developer</h3>
               <p class="muted">NASA - ASRC Federal</p>
             </div>
             <p class="muted">11/2022 - Present</p>
@@ -189,7 +189,8 @@
           </article>
       </div>
     </section>
-
+    
+    <!-- these project blocks/cards may be useful later -->
     <!-- <section class="section">
       <h2>Projects</h2>
       <div class="grid">
@@ -220,9 +221,9 @@
       </div>
     </section> -->
 
-    <footer class="footer muted">
+    <footer class="footer muted no-print">
       <p>© <span id="resume-year"></span> Michael M. Schlenker</p>
-      <p><a class="about-back" href="/">← Back</a></p>
+      <p><a class="about-back no-print" href="/">← Back</a></p>
     </footer>
   </main>
 

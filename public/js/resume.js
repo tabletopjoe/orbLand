@@ -109,3 +109,12 @@
 
   requestAnimationFrame(draw);
 })();
+
+(() => {
+  const el = document.getElementById('resumePdf');
+  if (!el) return;
+  el.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.print();
+  });
+})();
