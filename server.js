@@ -10,6 +10,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('/orbs', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'orbs.html'));
+});
+
 app.get('/about', (req, res) => {
   res.setHeader('X-Robots-Tag', 'noindex, noarchive');
   res.sendFile(path.join(__dirname, 'public', 'about.html'));

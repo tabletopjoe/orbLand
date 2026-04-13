@@ -1,6 +1,6 @@
 # orbLand
 
-Minimal home page links with interactive solar system toy. Work in progress.
+Minimal black canvas at `/` (centered circle, ~50% area). **Orbs** (solar system + link lists) lives at `/orbs`; **About** at `/about`. Work in progress.
 
 ## Getting Started
 
@@ -22,9 +22,9 @@ Minimal home page links with interactive solar system toy. Work in progress.
    npm start
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+3. Open [http://localhost:3000](http://localhost:3000) for the landing canvas, or [http://localhost:3000/orbs](http://localhost:3000/orbs) for the interactive solar system and link panels.
 
-You should see a sun at the center with a planet orbiting it and a moon orbiting the planet.
+On `/orbs`, you should see a sun at the center with planets orbiting and moons where revealed.
 
 ## Controls
 
@@ -43,9 +43,13 @@ Click an icon to open its popover; click outside to close.
 orbLand/
 ├── server.js       # Express server
 ├── public/
-│   ├── index.html
-│   ├── css/style.css   # Theme vars, icon strip, popovers
-│   └── js/main.js      # Simulation and icon handlers
+│   ├── index.html      # Landing (canvas)
+│   ├── js/landing.js   # Landing canvas draw
+│   ├── orbs.html       # Solar system + link categories
+│   ├── about.html
+│   ├── css/landing.css # Landing page
+│   ├── css/style.css   # Orbs: theme vars, link panels, sliders
+│   └── js/main.js      # Orbs simulation and UI
 └── package.json
 ```
 
