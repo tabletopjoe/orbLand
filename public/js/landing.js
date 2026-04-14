@@ -6,39 +6,42 @@
 
   const panel = document.getElementById('landing-link-panel');
 
-  /** Reference: lowest B♭ (~29.14 Hz). Twelve chromatic steps B♭→…→A (one octave of pitch classes). */
+  /** Reference: lowest B♭ (~29.14 Hz). Thirteen rings = one chromatic octave of keys: k=12 inner = first B♭, k=0 outer = second B♭ (left→right low→high). */
   const HZ_BB = 29.14;
   const SEMITONE_RATIO = 2 ** (1 / 12);
-  const CHROMATIC_STEPS = 12;
+  const CHROMATIC_STEPS = 13;
+  /** Twelve gaps between thirteen circles; inner disk (inside smallest ring) has no hover fill. */
+  const BAND_COUNT = CHROMATIC_STEPS - 1;
   const CHROMATIC_SCALE = 0.85;
   const CORNER_R = 19;
   const F_STEP = 7;
-  const cornerInnerR = CORNER_R * 2 ** (-F_STEP / 12);
+  const cornerInnerR = CORNER_R * 2 ** (-F_STEP / CHROMATIC_STEPS);
 
   /**
-   * Eleven ring gaps, outer band index 0 → inner band index 10.
-   * Pitch runs inner→outer B♭→A; spectrum index 0 = innermost gap (B♭–B), 10 = outermost (G♯–A).
+   * Twelve ring gaps: band 0 = outer (high B♭ side) … band 11 = inner (toward low B♭).
+   * Spectrum index 0 = innermost gap (low end of the octave), 11 = outermost gap (high end).
    */
-  const HOVER_SPECTRUM = Array.from({ length: 11 }, (_, i) => {
-    const t = i / 10;
+  const HOVER_SPECTRUM = Array.from({ length: BAND_COUNT }, (_, i) => {
+    const t = i / (BAND_COUNT - 1);
     const h = Math.round(215 + t * (308 - 215));
     return `hsl(${h}, 48%, 46%)`;
   });
 
   /**
-   * Ring k (0 = outer largest … 11 = inner smallest): pitch class p = 11 − k (0 = B♭ inner … 11 = A outer).
-   * Band b (between circles b and b+1): inner pitch = 10 − b. Tone p∈[0,10] → band 10−p; p=11 (A) → band 0.
-   * B♭-root chords: minor 0,3,7 · dim 0,3,6 · aug 0,4,8 · dom7 0,4,7,10 · maj7 0,4,7,11 · add9 0,4,7,2 (bands for add9 in root–3rd–5th–9th order: 10,6,3,8).
-   * Dom7 and maj7 share the same four bands (7th lives in band 0); last palette slot differs: 9 vs 10.
+   * Ring k (0 = outer largest … 12 = inner smallest): pitch rises outward; inner k=12 = first B♭, outer k=0 = octave B♭.
+   * Band b lies between circle b (outer side) and b+1: inner pitch class p (0=B♭…11=A) at circle b+1 satisfies p ≡ (11 − b) mod 12, so tone p → band b = (11 − p) mod 12 (here p∈{0…11} ⇒ b = 11 − p).
+   * Lower tonic B♭ (fundamental) = band 11; higher tonic (octave) = band 0. Minor/aug “higher tonic” swap root band 11 → 0.
+   * Dom7 / maj7 fourth tone: p=10 → band 1; p=11 → band 0 (same outer region, different colors).
+   * Link 7: B♭ minor blues — pitch classes 0,3,5,6,7,10 (root, ♭3, 4, ♭5, 5, ♭7).
    */
   const CHORD_LINK_PATTERNS = [
-    { bands: [10, 6, 3], colorIndices: [0, 4, 7] },
-    { bands: [10, 7, 3], colorIndices: [0, 3, 7] },
-    { bands: [10, 7, 4], colorIndices: [0, 3, 6] },
-    { bands: [10, 6, 2], colorIndices: [0, 4, 8] },
-    { bands: [10, 6, 3, 0], colorIndices: [0, 4, 7, 9] },
-    { bands: [10, 6, 3, 0], colorIndices: [0, 4, 7, 10] },
-    { bands: [10, 6, 3, 8], colorIndices: [0, 4, 7, 9] }
+    { bands: [11, 7, 4], colorIndices: [0, 4, 7] },
+    { bands: [0, 8, 4], colorIndices: [0, 3, 7] },
+    { bands: [11, 8, 5], colorIndices: [0, 3, 6] },
+    { bands: [0, 7, 3], colorIndices: [0, 4, 8] },
+    { bands: [11, 7, 4, 1], colorIndices: [0, 4, 7, 9] },
+    { bands: [11, 7, 4, 0], colorIndices: [0, 4, 7, 10] },
+    { bands: [11, 8, 6, 5, 4, 1], colorIndices: [0, 2, 4, 5, 7, 9] }
   ];
 
   const MOBILE_MQ = window.matchMedia('(max-width: 640px)');
@@ -51,7 +54,7 @@
   let chordLinkIndex = null;
 
   function spectrumIndexForBand(bandIndex) {
-    return 10 - bandIndex;
+    return BAND_COUNT - 1 - bandIndex;
   }
 
   function isMobile() {
@@ -96,9 +99,10 @@
     const leftX = cx - rBb;
     const cxArr = [];
     const rArr = [];
+    const last = CHROMATIC_STEPS - 1;
     for (let k = 0; k < CHROMATIC_STEPS; k++) {
-      const hz = HZ_BB * SEMITONE_RATIO ** k;
-      const r = rBb * (HZ_BB / hz);
+      const hz = HZ_BB * SEMITONE_RATIO ** (last - k);
+      const r = rBb * SEMITONE_RATIO ** -k;
       rArr.push(r);
       cxArr.push(leftX + r);
     }
@@ -114,9 +118,10 @@
       return Math.hypot(dx, dy);
     };
 
-    if (dist(11) <= r[11]) return null;
+    const inner = CHROMATIC_STEPS - 1;
+    if (dist(inner) <= r[inner]) return null;
 
-    for (let k = 0; k < 11; k++) {
+    for (let k = 0; k < BAND_COUNT; k++) {
       if (dist(k) <= r[k] && dist(k + 1) > r[k + 1]) return k;
     }
     return null;
@@ -173,7 +178,7 @@
         const c = HOVER_SPECTRUM[ci];
         fillBandAnnulus(cx[b], cy, r[b], cx[b + 1], cy, r[b + 1], c);
       }
-    } else if (hoverBand !== null && hoverBand >= 0 && hoverBand < 11) {
+    } else if (hoverBand !== null && hoverBand >= 0 && hoverBand < BAND_COUNT) {
       const c = HOVER_SPECTRUM[spectrumIndexForBand(hoverBand)];
       fillBandAnnulus(cx[hoverBand], cy, r[hoverBand], cx[hoverBand + 1], cy, r[hoverBand + 1], c);
     }
