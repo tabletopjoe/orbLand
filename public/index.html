@@ -4,10 +4,24 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>schlnkr</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body>
-  <canvas id="landing-canvas" aria-hidden="true"></canvas>
+  <div class="landing-shell">
+    <canvas id="landing-canvas" role="img" aria-label="Toggle quick links using the inner circle in the upper left"></canvas>
+    <nav class="landing-link-panel" id="landing-link-panel" aria-label="Quick links">
+      <a href="#" class="landing-link">Placeholder One</a>
+      <a href="#" class="landing-link">Placeholder Two</a>
+      <a href="#" class="landing-link">Placeholder Three</a>
+      <a href="#" class="landing-link">Placeholder Four</a>
+      <a href="#" class="landing-link">Placeholder Five</a>
+      <a href="#" class="landing-link">Placeholder Six</a>
+      <a href="#" class="landing-link">Placeholder Seven</a>
+    </nav>
+  </div>
   <script src="/js/landing.js"></script>
 </body>
 </html>
