@@ -4,18 +4,14 @@
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
-  const panel = document.getElementById('landing-link-panel');
-
-  /** Reference: lowest B♭ (~29.14 Hz). Thirteen rings = one chromatic octave of keys: k=12 inner = first B♭, k=0 outer = second B♭ (left→right low→high). */
-  const HZ_BB = 29.14;
+  /** Thirteen rings = one chromatic octave of keys: k=12 inner = first B♭, k=0 outer = second B♭ (left→right low→high). */
   const SEMITONE_RATIO = 2 ** (1 / 12);
   const CHROMATIC_STEPS = 13;
   /** Twelve gaps between thirteen circles; inner disk (inside smallest ring) has no hover fill. */
   const BAND_COUNT = CHROMATIC_STEPS - 1;
   const CHROMATIC_SCALE = 0.85;
-  const CORNER_R = 19;
-  const F_STEP = 7;
-  const cornerInnerR = CORNER_R * 2 ** (-F_STEP / CHROMATIC_STEPS);
+  /** Uniform scale: 1 = default; slider 25–300 → 0.25× … 3× (semitone ring ratios unchanged). */
+  let ringSizeMultiplier = 1;
 
   /**
    * Twelve ring gaps: band 0 = outer (high B♭ side) … band 11 = inner (toward low B♭).
@@ -44,9 +40,6 @@
     { bands: [11, 8, 6, 5, 4, 1], colorIndices: [0, 2, 4, 5, 7, 9] }
   ];
 
-  const MOBILE_MQ = window.matchMedia('(max-width: 640px)');
-  let linksOpen = false;
-
   /** @type {{ cx: number[], r: number[], cy: number } | null} */
   let chromaticGeom = null;
   let hoverBand = null;
@@ -55,31 +48,6 @@
 
   function spectrumIndexForBand(bandIndex) {
     return BAND_COUNT - 1 - bandIndex;
-  }
-
-  function isMobile() {
-    return MOBILE_MQ.matches;
-  }
-
-  function updatePanelVisibility() {
-    if (!panel) return;
-    const show = isMobile() || linksOpen;
-    panel.classList.toggle('is-visible', show);
-  }
-
-  function getCornerInnerCenter() {
-    const cornerCx = CORNER_R * 2;
-    const cornerCy = CORNER_R * 2;
-    const cornerRightX = cornerCx + CORNER_R;
-    const cornerInnerCx = cornerRightX - cornerInnerR;
-    return { cornerInnerCx, cornerInnerCy: cornerCy };
-  }
-
-  function isPointInMoonToggle(cssX, cssY) {
-    const { cornerInnerCx, cornerInnerCy } = getCornerInnerCenter();
-    const dx = cssX - cornerInnerCx;
-    const dy = cssY - cornerInnerCy;
-    return dx * dx + dy * dy <= cornerInnerR * cornerInnerR;
   }
 
   function canvasCssCoordsFromEvent(e) {
@@ -93,18 +61,22 @@
   function computeChromaticGeometry(cssW, cssH) {
     const viewportArea = cssW * cssH;
     const circleAreaFraction = 0.5 * (1 - 0.15);
-    const rBb = Math.sqrt((circleAreaFraction * viewportArea) / Math.PI) * CHROMATIC_SCALE;
-    const cx = cssW / 2;
+    const rBbNominal =
+      Math.sqrt((circleAreaFraction * viewportArea) / Math.PI) * CHROMATIC_SCALE;
+    const rBb = rBbNominal * ringSizeMultiplier;
+    const cxCanvas = cssW / 2;
     const cy = cssH / 2;
-    const leftX = cx - rBb;
-    const cxArr = [];
+    /** Fixed screen point: center of innermost ring at multiplier 1 (same as old leftX = cx − rBb layout). */
+    const anchorX = cxCanvas + rBbNominal * (SEMITONE_RATIO ** -12 - 1);
     const rArr = [];
-    const last = CHROMATIC_STEPS - 1;
     for (let k = 0; k < CHROMATIC_STEPS; k++) {
-      const hz = HZ_BB * SEMITONE_RATIO ** (last - k);
-      const r = rBb * SEMITONE_RATIO ** -k;
-      rArr.push(r);
-      cxArr.push(leftX + r);
+      rArr.push(rBb * SEMITONE_RATIO ** -k);
+    }
+    const inner = CHROMATIC_STEPS - 1;
+    const leftX = anchorX - rArr[inner];
+    const cxArr = [];
+    for (let k = 0; k < CHROMATIC_STEPS; k++) {
+      cxArr.push(leftX + rArr[k]);
     }
     return { cx: cxArr, r: rArr, cy };
   }
@@ -186,47 +158,10 @@
     for (let k = 0; k < CHROMATIC_STEPS; k++) {
       strokeCircleOnly(cx[k], cy, r[k]);
     }
-
-    const cornerCx = CORNER_R * 2;
-    const cornerCy = CORNER_R * 2;
-    const cornerRightX = cornerCx + CORNER_R;
-    const cornerInnerCx = cornerRightX - cornerInnerR;
-
-    ctx.beginPath();
-    ctx.arc(cornerCx, cornerCy, CORNER_R, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.arc(cornerInnerCx, cornerCy, cornerInnerR, 0, Math.PI * 2);
-    ctx.fillStyle = '#000000';
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
   }
-
-  canvas.addEventListener('click', (e) => {
-    const { x, y } = canvasCssCoordsFromEvent(e);
-    if (!isPointInMoonToggle(x, y)) return;
-    e.preventDefault();
-    linksOpen = !linksOpen;
-    updatePanelVisibility();
-  });
 
   canvas.addEventListener('mousemove', (e) => {
     const { x, y } = canvasCssCoordsFromEvent(e);
-    if (isPointInMoonToggle(x, y)) {
-      canvas.style.cursor = 'pointer';
-      if (hoverBand !== null) {
-        hoverBand = null;
-        draw();
-      }
-      return;
-    }
     canvas.style.cursor = 'default';
     if (chordLinkIndex !== null) return;
     const band = chromaticGeom ? hitTestBand(x, y, chromaticGeom) : null;
@@ -243,15 +178,37 @@
     }
   });
 
-  MOBILE_MQ.addEventListener('change', updatePanelVisibility);
-
   window.addEventListener('resize', () => {
     draw();
-    updatePanelVisibility();
   });
 
+  const ringSizeSlider = document.getElementById('landing-ring-size-slider');
+  if (ringSizeSlider) {
+    ringSizeSlider.addEventListener('input', () => {
+      ringSizeMultiplier = Number(ringSizeSlider.value) / 100;
+      draw();
+    });
+  }
+
+  const landingFloat = document.getElementById('landing-slider-float');
+  const landingToggle = document.getElementById('landing-controls-toggle');
+  if (landingFloat && landingToggle) {
+    landingToggle.addEventListener('click', () => {
+      landingFloat.classList.toggle('landing-slider-float--controls-hidden');
+      const hidden = landingFloat.classList.contains('landing-slider-float--controls-hidden');
+      landingToggle.setAttribute('aria-expanded', String(!hidden));
+      landingToggle.setAttribute(
+        'aria-label',
+        hidden ? 'Show ring controls' : 'Hide ring controls'
+      );
+    });
+  }
+
   document.querySelectorAll('.landing-link').forEach((a, i) => {
-    a.addEventListener('click', (e) => e.preventDefault());
+    a.addEventListener('click', (e) => {
+      const href = a.getAttribute('href');
+      if (!href || href === '#') e.preventDefault();
+    });
     a.addEventListener('mouseenter', () => {
       const next = CHORD_LINK_PATTERNS[i] ? i : null;
       if (next !== chordLinkIndex) {
@@ -269,5 +226,4 @@
   });
 
   draw();
-  updatePanelVisibility();
 })();

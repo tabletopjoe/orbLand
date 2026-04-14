@@ -11,16 +11,60 @@
 </head>
 <body>
   <div class="landing-shell">
-    <canvas id="landing-canvas" role="img" aria-label="Toggle quick links using the inner circle in the upper left"></canvas>
+    <canvas id="landing-canvas" role="img" aria-label="Chromatic rings background"></canvas>
     <nav class="landing-link-panel" id="landing-link-panel" aria-label="Quick links">
-      <a href="#" class="landing-link">Placeholder One</a>
-      <a href="#" class="landing-link">Placeholder Two</a>
-      <a href="#" class="landing-link">Placeholder Three</a>
-      <a href="#" class="landing-link">Placeholder Four</a>
-      <a href="#" class="landing-link">Placeholder Five</a>
-      <a href="#" class="landing-link">Placeholder Six</a>
-      <a href="#" class="landing-link">Placeholder Seven</a>
+      <a href="#" class="landing-link">CONSULTING</a>
+      <a href="/about" class="landing-link">ABOUT</a>
+      <a href="/orbs" class="landing-link">ORBS</a>
+      <a href="#" class="landing-link">MEASURES</a>
+      <a href="#" class="landing-link">STARS</a>
+      <a href="#" class="landing-link">PLACEHOLDER</a>
+      <a href="#" class="landing-link">PLACEHOLDER</a>
     </nav>
+  </div>
+  <div
+    class="landing-slider-float landing-slider-float--controls-hidden"
+    id="landing-slider-float"
+    aria-label="Ring controls"
+  >
+    <button
+      type="button"
+      class="landing-controls-toggle"
+      id="landing-controls-toggle"
+      aria-expanded="false"
+      aria-controls="landing-slider-controls"
+      aria-label="Show ring controls"
+    >
+      <svg
+        class="landing-moon-icon"
+        width="40"
+        height="40"
+        viewBox="0 0 76 76"
+        aria-hidden="true"
+        focusable="false"
+      >
+        <!-- Same geometry as the former canvas moon: outer r=19 @ (38,38), inner r = 19·2^(-7/12), inner cx = 38+19−r_inner -->
+        <circle cx="38" cy="38" r="19" fill="#ffffff" stroke="#ffffff" stroke-width="1" />
+        <circle cx="45.332" cy="38" r="11.668" fill="#000000" stroke="#ffffff" stroke-width="1" />
+      </svg>
+    </button>
+    <div class="landing-slider-controls" id="landing-slider-controls">
+      <div class="landing-slider-cell">
+        <label for="landing-ring-size-slider">Size</label>
+        <div class="landing-slider-wrap">
+          <input
+            type="range"
+            id="landing-ring-size-slider"
+            class="landing-vertical-slider"
+            min="25"
+            max="300"
+            value="100"
+            step="1"
+            aria-label="Overall chromatic ring size"
+          />
+        </div>
+      </div>
+    </div>
   </div>
   <script src="/js/landing.js"></script>
 </body>
