@@ -15,12 +15,31 @@
   const F_STEP = 7;
   const cornerInnerR = CORNER_R * 2 ** (-F_STEP / 12);
 
-  /** Bands 0–10 = gaps between the 12 circles (blue→violet; skewed away from green). Innermost disk has no hover fill. */
+  /**
+   * Eleven ring gaps, outer band index 0 → inner band index 10.
+   * Pitch runs inner→outer B♭→A; spectrum index 0 = innermost gap (B♭–B), 10 = outermost (G♯–A).
+   */
   const HOVER_SPECTRUM = Array.from({ length: 11 }, (_, i) => {
     const t = i / 10;
     const h = Math.round(215 + t * (308 - 215));
     return `hsl(${h}, 48%, 46%)`;
   });
+
+  /**
+   * Ring k (0 = outer largest … 11 = inner smallest): pitch class p = 11 − k (0 = B♭ inner … 11 = A outer).
+   * Band b (between circles b and b+1): inner pitch = 10 − b. Tone p∈[0,10] → band 10−p; p=11 (A) → band 0.
+   * B♭-root chords: minor 0,3,7 · dim 0,3,6 · aug 0,4,8 · dom7 0,4,7,10 · maj7 0,4,7,11 · add9 0,4,7,2 (bands for add9 in root–3rd–5th–9th order: 10,6,3,8).
+   * Dom7 and maj7 share the same four bands (7th lives in band 0); last palette slot differs: 9 vs 10.
+   */
+  const CHORD_LINK_PATTERNS = [
+    { bands: [10, 6, 3], colorIndices: [0, 4, 7] },
+    { bands: [10, 7, 3], colorIndices: [0, 3, 7] },
+    { bands: [10, 7, 4], colorIndices: [0, 3, 6] },
+    { bands: [10, 6, 2], colorIndices: [0, 4, 8] },
+    { bands: [10, 6, 3, 0], colorIndices: [0, 4, 7, 9] },
+    { bands: [10, 6, 3, 0], colorIndices: [0, 4, 7, 10] },
+    { bands: [10, 6, 3, 8], colorIndices: [0, 4, 7, 9] }
+  ];
 
   const MOBILE_MQ = window.matchMedia('(max-width: 640px)');
   let linksOpen = false;
@@ -28,6 +47,12 @@
   /** @type {{ cx: number[], r: number[], cy: number } | null} */
   let chromaticGeom = null;
   let hoverBand = null;
+  /** @type {number | null} */
+  let chordLinkIndex = null;
+
+  function spectrumIndexForBand(bandIndex) {
+    return 10 - bandIndex;
+  }
 
   function isMobile() {
     return MOBILE_MQ.matches;
@@ -140,8 +165,16 @@
       fillCircleOnly(cx[k], cy, r[k]);
     }
 
-    if (hoverBand !== null && hoverBand >= 0 && hoverBand < 11) {
-      const c = HOVER_SPECTRUM[hoverBand];
+    if (chordLinkIndex !== null && CHORD_LINK_PATTERNS[chordLinkIndex]) {
+      const pat = CHORD_LINK_PATTERNS[chordLinkIndex];
+      for (let j = 0; j < pat.bands.length; j++) {
+        const b = pat.bands[j];
+        const ci = pat.colorIndices[j];
+        const c = HOVER_SPECTRUM[ci];
+        fillBandAnnulus(cx[b], cy, r[b], cx[b + 1], cy, r[b + 1], c);
+      }
+    } else if (hoverBand !== null && hoverBand >= 0 && hoverBand < 11) {
+      const c = HOVER_SPECTRUM[spectrumIndexForBand(hoverBand)];
       fillBandAnnulus(cx[hoverBand], cy, r[hoverBand], cx[hoverBand + 1], cy, r[hoverBand + 1], c);
     }
 
@@ -190,6 +223,7 @@
       return;
     }
     canvas.style.cursor = 'default';
+    if (chordLinkIndex !== null) return;
     const band = chromaticGeom ? hitTestBand(x, y, chromaticGeom) : null;
     if (band !== hoverBand) {
       hoverBand = band;
@@ -211,8 +245,22 @@
     updatePanelVisibility();
   });
 
-  document.querySelectorAll('.landing-link').forEach((a) => {
+  document.querySelectorAll('.landing-link').forEach((a, i) => {
     a.addEventListener('click', (e) => e.preventDefault());
+    a.addEventListener('mouseenter', () => {
+      const next = CHORD_LINK_PATTERNS[i] ? i : null;
+      if (next !== chordLinkIndex) {
+        chordLinkIndex = next;
+        hoverBand = null;
+        draw();
+      }
+    });
+    a.addEventListener('mouseleave', () => {
+      if (chordLinkIndex === i) {
+        chordLinkIndex = null;
+        draw();
+      }
+    });
   });
 
   draw();
