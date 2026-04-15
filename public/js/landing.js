@@ -12,6 +12,15 @@
   const CHROMATIC_SCALE = 0.85;
   /** Uniform scale: 1 = default; slider 25–300 → 0.25× … 3× (semitone ring ratios unchanged). */
   let ringSizeMultiplier = 1;
+  /** CONSULTING link: 208% rings, semi-transparent gears, copy inside the tonic disk. */
+  const CONSULTING_RING_SLIDER_PCT = 208;
+  /** Shift tonic label block inward from the disk’s left edge (CSS px). */
+  const TONIC_LABEL_LEFT_INSET_PX = 88;
+  let landingConsultingActive = false;
+
+  /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. */
+  const CONSULTING_TONIC_COPY =
+    'MICROSOFT 365\n  POWER PLATFORM\n SHAREPOINT\n TEAMS\n\n CUSTOM WEB SOLUTIONS\n';
 
   /**
    * Perfect fifth above B♭ (7 semitones, pitch class 7): band b = (11 − p) mod 12 → band 4
@@ -154,6 +163,74 @@
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.stroke();
+  }
+
+  /**
+   * Word-wrap for canvas. Respects newline characters in `text` (each \\n starts a new row;
+   * use \\n\\n for an extra gap). Each line segment is wrapped to maxWidth.
+   */
+  function wrapCanvasTextLines(text, maxWidth) {
+    const paragraphs = text.split('\n');
+    const lines = [];
+    for (const raw of paragraphs) {
+      if (raw.trim() === '') {
+        lines.push('');
+        continue;
+      }
+      const words = raw.trim().split(/\s+/).filter(Boolean);
+      let line = '';
+      for (const w of words) {
+        const test = line ? `${line} ${w}` : w;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = w;
+        } else {
+          line = test;
+        }
+      }
+      if (line) lines.push(line);
+    }
+    return lines;
+  }
+
+  function consultingWrappedBlockHeight(lines, lineHeight) {
+    let h = 0;
+    for (const ln of lines) {
+      h += ln === '' ? lineHeight * 0.55 : lineHeight;
+    }
+    return h;
+  }
+
+  /** Fills wrapped consulting copy inside the innermost (tonic) circle. */
+  function drawConsultingTonicText(centerX, centerY, rInner) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, Math.max(1, rInner - 3), 0, Math.PI * 2);
+    ctx.clip();
+
+    const pad = Math.max(10, rInner * 0.14);
+    const maxW = Math.max(40, (rInner - pad) * 2);
+    const fontSizeBase = Math.max(9, Math.min(13, rInner / 4.5));
+    const fontSize = fontSizeBase * 3;
+    ctx.font = `400 ${fontSize}px Poppins, system-ui, sans-serif`;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    const lines = wrapCanvasTextLines(CONSULTING_TONIC_COPY, maxW);
+    const lineHeight = fontSize * 1.38;
+    const totalH = consultingWrappedBlockHeight(lines, lineHeight);
+    const textLeftX = centerX - rInner + pad + TONIC_LABEL_LEFT_INSET_PX;
+    let y = centerY - totalH / 2 + lineHeight / 2;
+    for (const ln of lines) {
+      if (ln === '') {
+        y += lineHeight * 0.55;
+        continue;
+      }
+      ctx.fillText(ln, textLeftX, y);
+      y += lineHeight;
+    }
+    ctx.restore();
   }
 
   /**
@@ -305,8 +382,15 @@
       strokeCircleOnly(cx[k], cy, r[k]);
     }
 
+    if (landingConsultingActive) {
+      drawConsultingTonicText(cx[innerK], cy, r[innerK]);
+    }
+
     const rGear = r[FIFTH_BAND_INDEX] - r[FIFTH_BAND_INDEX + 1];
     const trackR = r[innerK] - rGear;
+    const gearAlpha = landingConsultingActive ? 0.5 : 1;
+    ctx.save();
+    ctx.globalAlpha = gearAlpha;
     if (trackR > 0 && rGear > 0) {
       const gx = cx[innerK] + trackR * Math.cos(gearTrackAngle);
       const gy = cy + trackR * Math.sin(gearTrackAngle);
@@ -315,6 +399,7 @@
     } else {
       drawGearCircle(cx[innerK], cy, rGear, gearRollAngle);
     }
+    ctx.restore();
   }
 
   window.addEventListener('mousemove', () => {
@@ -346,12 +431,21 @@
     render();
   });
 
+  function syncRingSizePctLabel() {
+    const el = document.getElementById('landing-ring-size-pct');
+    const slider = document.getElementById('landing-ring-size-slider');
+    if (!el || !slider) return;
+    el.textContent = `${slider.value}%`;
+  }
+
   const ringSizeSlider = document.getElementById('landing-ring-size-slider');
   if (ringSizeSlider) {
     ringSizeSlider.addEventListener('input', () => {
       ringSizeMultiplier = Number(ringSizeSlider.value) / 100;
+      syncRingSizePctLabel();
       render();
     });
+    syncRingSizePctLabel();
   }
 
   const landingFloat = document.getElementById('landing-slider-float');
@@ -368,8 +462,33 @@
     });
   }
 
+  function applyConsultingMode(active) {
+    landingConsultingActive = active;
+    const slider = document.getElementById('landing-ring-size-slider');
+    if (slider) {
+      if (active) {
+        slider.value = String(CONSULTING_RING_SLIDER_PCT);
+        ringSizeMultiplier = CONSULTING_RING_SLIDER_PCT / 100;
+      } else {
+        slider.value = '100';
+        ringSizeMultiplier = 1;
+      }
+      syncRingSizePctLabel();
+    }
+    render();
+  }
+
+  const consultingLink = document.getElementById('landing-link-consulting');
+  if (consultingLink) {
+    consultingLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      applyConsultingMode(!landingConsultingActive);
+    });
+  }
+
   document.querySelectorAll('.landing-link').forEach((a, i) => {
     a.addEventListener('click', (e) => {
+      if (a.id === 'landing-link-consulting') return;
       const href = a.getAttribute('href');
       if (!href || href === '#') e.preventDefault();
     });
