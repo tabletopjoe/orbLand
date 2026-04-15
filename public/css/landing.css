@@ -72,19 +72,17 @@ body {
   border-radius: 2px;
 }
 
-/* Right-edge vertical sliders (same interaction model as /orbs) */
+/* Right-edge: moon toggle on top, size slider revealed beneath (same vertical axis) */
 .landing-slider-float {
   --landing-slider-top: max(1rem, env(safe-area-inset-top, 0px));
   --landing-slider-right: max(1rem, env(safe-area-inset-right, 0px));
-  --landing-slider-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   position: fixed;
   top: var(--landing-slider-top);
   right: var(--landing-slider-right);
-  bottom: var(--landing-slider-bottom);
   z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-start;
   gap: 0.5rem;
   pointer-events: none;
@@ -132,21 +130,16 @@ body {
 .landing-slider-controls {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.5rem;
-  flex: 1 1 auto;
+  flex-shrink: 0;
   min-height: 0;
-  max-height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
 }
 
 .landing-slider-cell {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   gap: 0.25rem;
 }
 
@@ -157,7 +150,7 @@ body {
   color: var(--landing-ui);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  text-align: right;
+  text-align: center;
 }
 
 .landing-slider-wrap {
@@ -218,7 +211,6 @@ body {
   .landing-slider-float {
     --landing-slider-top: max(0.5rem, env(safe-area-inset-top, 0px));
     --landing-slider-right: max(0.5rem, env(safe-area-inset-right, 0px));
-    --landing-slider-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   }
 
   .landing-link-panel {

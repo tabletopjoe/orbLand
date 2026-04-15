@@ -14,6 +14,23 @@
   let ringSizeMultiplier = 1;
 
   /**
+   * Perfect fifth above B♭ (7 semitones, pitch class 7): band b = (11 − p) mod 12 → band 4
+   * (between circles 4 and 5). Gear circle diameter = that band’s width at its broadest point:
+   * 2·(r[4] − r[5]), radius = r[4] − r[5]. It rolls along the inside of the innermost ring.
+   */
+  const FIFTH_BAND_INDEX = 4;
+  /** Arc length along the gear’s center track per second (px/s in CSS pixels). */
+  const GEAR_SPEED_PX_PER_SEC = 15;
+  /** Keep rolling briefly after the last mousemove so motion stays smooth. */
+  const GEAR_MOUSE_IDLE_MS = 120;
+  /** Child gear at parent spoke tip: radius relative to parent gear radius. */
+  const CHILD_GEAR_RADIUS_SCALE = 0.75;
+
+  function gearSpokeLengthCss(rGear) {
+    return 0.84375 * (2 * Math.PI * rGear);
+  }
+
+  /**
    * Twelve ring gaps: band 0 = outer (high B♭ side) … band 11 = inner (toward low B♭).
    * Spectrum index 0 = innermost gap (low end of the octave), 11 = outermost gap (high end).
    */
@@ -45,6 +62,17 @@
   let hoverBand = null;
   /** @type {number | null} */
   let chordLinkIndex = null;
+
+  const innerK = CHROMATIC_STEPS - 1;
+  /** Angle (rad) of gear center on its track around the parent center; + = clockwise on screen. */
+  let gearTrackAngle = -Math.PI / 2;
+  /** Gear rotation (rad) for rolling without slip: dφ = ds / r_gear. */
+  let gearRollAngle = 0;
+  let lastMouseMoveTime = 0;
+  let lastGearFrameTime = 0;
+  let gearRafScheduled = false;
+  let cachedCanvasCssW = 0;
+  let cachedCanvasCssH = 0;
 
   function spectrumIndexForBand(bandIndex) {
     return BAND_COUNT - 1 - bandIndex;
@@ -114,6 +142,87 @@
     ctx.stroke();
   }
 
+  function drawGearParentLink(parentX, parentY, gearX, gearY) {
+    ctx.beginPath();
+    ctx.moveTo(parentX, parentY);
+    ctx.lineTo(gearX, gearY);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  /**
+   * Parent gear circle + spoke (child gear center sits at spoke tip). Rolls inside innermost ring.
+   */
+  function drawGearCircle(gx, gy, rGear, rollRad) {
+    const spokeLen = gearSpokeLengthCss(rGear);
+    const rChildGear = rGear * CHILD_GEAR_RADIUS_SCALE;
+
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(rollRad);
+    ctx.beginPath();
+    ctx.arc(0, 0, rGear, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(spokeLen, 0);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+
+    const childCx = gx + spokeLen * Math.cos(rollRad);
+    const childCy = gy + spokeLen * Math.sin(rollRad);
+    strokeCircleOnly(childCx, childCy, rChildGear);
+  }
+
+  function ensureCanvasBackingStore(cssW, cssH) {
+    if (cachedCanvasCssW === cssW && cachedCanvasCssH === cssH) return;
+    cachedCanvasCssW = cssW;
+    cachedCanvasCssH = cssH;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.max(1, Math.floor(cssW * dpr));
+    canvas.height = Math.max(1, Math.floor(cssH * dpr));
+  }
+
+  function bumpMouseForGear() {
+    lastMouseMoveTime = performance.now();
+    if (!gearRafScheduled) {
+      gearRafScheduled = true;
+      requestAnimationFrame(gearAnimationFrame);
+    }
+  }
+
+  function gearAnimationFrame(now) {
+    gearRafScheduled = false;
+    if (!chromaticGeom) return;
+
+    const r = chromaticGeom.r;
+    const rGear = r[FIFTH_BAND_INDEX] - r[FIFTH_BAND_INDEX + 1];
+    const rParent = r[innerK];
+    const trackR = rParent - rGear;
+
+    const moving = now - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS;
+    if (moving && trackR > 0 && rGear > 0) {
+      const dtRaw = lastGearFrameTime ? (now - lastGearFrameTime) / 1000 : 0;
+      const dt = Math.min(0.1, Math.max(0, dtRaw));
+      const ds = GEAR_SPEED_PX_PER_SEC * dt;
+      gearTrackAngle += ds / trackR;
+      gearRollAngle += ds / rGear;
+    }
+    lastGearFrameTime = now;
+
+    render();
+
+    if (now - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
+      gearRafScheduled = true;
+      requestAnimationFrame(gearAnimationFrame);
+    }
+  }
+
   function fillBandAnnulus(c0x, c0y, r0, c1x, c1y, r1, color) {
     ctx.beginPath();
     ctx.arc(c0x, c0y, r0, 0, Math.PI * 2);
@@ -122,13 +231,12 @@
     ctx.fill('evenodd');
   }
 
-  function draw() {
+  function render() {
     const dpr = window.devicePixelRatio || 1;
     const cssW = window.innerWidth;
     const cssH = window.innerHeight;
 
-    canvas.width = Math.max(1, Math.floor(cssW * dpr));
-    canvas.height = Math.max(1, Math.floor(cssH * dpr));
+    ensureCanvasBackingStore(cssW, cssH);
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
@@ -158,35 +266,53 @@
     for (let k = 0; k < CHROMATIC_STEPS; k++) {
       strokeCircleOnly(cx[k], cy, r[k]);
     }
+
+    const rGear = r[FIFTH_BAND_INDEX] - r[FIFTH_BAND_INDEX + 1];
+    const trackR = r[innerK] - rGear;
+    if (trackR > 0 && rGear > 0) {
+      const gx = cx[innerK] + trackR * Math.cos(gearTrackAngle);
+      const gy = cy + trackR * Math.sin(gearTrackAngle);
+      drawGearParentLink(cx[innerK], cy, gx, gy);
+      drawGearCircle(gx, gy, rGear, gearRollAngle);
+    } else {
+      drawGearCircle(cx[innerK], cy, rGear, gearRollAngle);
+    }
   }
 
+  window.addEventListener('mousemove', () => {
+    bumpMouseForGear();
+  });
+
   canvas.addEventListener('mousemove', (e) => {
+    bumpMouseForGear();
     const { x, y } = canvasCssCoordsFromEvent(e);
     canvas.style.cursor = 'default';
     if (chordLinkIndex !== null) return;
     const band = chromaticGeom ? hitTestBand(x, y, chromaticGeom) : null;
     if (band !== hoverBand) {
       hoverBand = band;
-      draw();
+      render();
     }
   });
 
   canvas.addEventListener('mouseleave', () => {
     if (hoverBand !== null) {
       hoverBand = null;
-      draw();
+      render();
     }
   });
 
   window.addEventListener('resize', () => {
-    draw();
+    cachedCanvasCssW = 0;
+    cachedCanvasCssH = 0;
+    render();
   });
 
   const ringSizeSlider = document.getElementById('landing-ring-size-slider');
   if (ringSizeSlider) {
     ringSizeSlider.addEventListener('input', () => {
       ringSizeMultiplier = Number(ringSizeSlider.value) / 100;
-      draw();
+      render();
     });
   }
 
@@ -214,16 +340,16 @@
       if (next !== chordLinkIndex) {
         chordLinkIndex = next;
         hoverBand = null;
-        draw();
+        render();
       }
     });
     a.addEventListener('mouseleave', () => {
       if (chordLinkIndex === i) {
         chordLinkIndex = null;
-        draw();
+        render();
       }
     });
   });
 
-  draw();
+  render();
 })();
