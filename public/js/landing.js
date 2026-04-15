@@ -21,6 +21,8 @@
   const FIFTH_BAND_INDEX = 4;
   /** Arc length along the gear’s center track per second (px/s in CSS pixels). */
   const GEAR_SPEED_PX_PER_SEC = 15;
+  /** Multiply grandchild orbit angular speed vs the main gear path (same linear ds). */
+  const GRANDCHILD_ORBIT_SPEED_MULT = 8;
   /** Keep rolling briefly after the last mousemove so motion stays smooth. */
   const GEAR_MOUSE_IDLE_MS = 120;
   /** Child gear at parent spoke tip: radius relative to parent gear radius. */
@@ -68,8 +70,11 @@
   let gearTrackAngle = -Math.PI / 2;
   /** Gear rotation (rad) for rolling without slip: dφ = ds / r_gear. */
   let gearRollAngle = 0;
+  /** Grandchild gear center on exterior orbit around child gear (world angle). */
+  let orbitGrandchildAngle = -Math.PI / 2;
   let lastMouseMoveTime = 0;
-  let lastGearFrameTime = 0;
+  /** Wall clock for gear physics integrated inside render() (any redraw path). */
+  let lastGearPhysicsTime = 0;
   let gearRafScheduled = false;
   let cachedCanvasCssW = 0;
   let cachedCanvasCssH = 0;
@@ -152,31 +157,44 @@
   }
 
   /**
-   * Parent gear circle + spoke (child gear center sits at spoke tip). Rolls inside innermost ring.
+   * Parent gear → spoke → child (collinear with rollRad). Grandchild orbits **outside** the child:
+   * center on a circle of radius r_child + r_grandchild around the child center.
    */
   function drawGearCircle(gx, gy, rGear, rollRad) {
-    const spokeLen = gearSpokeLengthCss(rGear);
-    const rChildGear = rGear * CHILD_GEAR_RADIUS_SCALE;
+    const s1 = gearSpokeLengthCss(rGear);
+    const rC = rGear * CHILD_GEAR_RADIUS_SCALE;
+    const rG = rC * CHILD_GEAR_RADIUS_SCALE;
+    const trackGrandchild = rC + rG;
 
     ctx.save();
     ctx.translate(gx, gy);
     ctx.rotate(rollRad);
+
     ctx.beginPath();
     ctx.arc(0, 0, rGear, 0, Math.PI * 2);
     ctx.strokeStyle = '#ffffff';
     ctx.lineWidth = 1;
     ctx.stroke();
+
     ctx.beginPath();
     ctx.moveTo(0, 0);
-    ctx.lineTo(spokeLen, 0);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1;
+    ctx.lineTo(s1, 0);
     ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(s1, 0, rC, 0, Math.PI * 2);
+    ctx.stroke();
+
     ctx.restore();
 
-    const childCx = gx + spokeLen * Math.cos(rollRad);
-    const childCy = gy + spokeLen * Math.sin(rollRad);
-    strokeCircleOnly(childCx, childCy, rChildGear);
+    if (trackGrandchild <= 0) return;
+
+    const childCx = gx + s1 * Math.cos(rollRad);
+    const childCy = gy + s1 * Math.sin(rollRad);
+    const gCx = childCx + trackGrandchild * Math.cos(orbitGrandchildAngle);
+    const gCy = childCy + trackGrandchild * Math.sin(orbitGrandchildAngle);
+    drawGearParentLink(childCx, childCy, gCx, gCy);
+    strokeCircleOnly(gCx, gCy, rG);
   }
 
   function ensureCanvasBackingStore(cssW, cssH) {
@@ -196,28 +214,47 @@
     }
   }
 
-  function gearAnimationFrame(now) {
-    gearRafScheduled = false;
+  /** Advance track / roll / grandchild orbit from real time (runs every render while active). */
+  function stepGearPhysics() {
+    const t = performance.now();
     if (!chromaticGeom) return;
 
-    const r = chromaticGeom.r;
-    const rGear = r[FIFTH_BAND_INDEX] - r[FIFTH_BAND_INDEX + 1];
-    const rParent = r[innerK];
+    const rArr = chromaticGeom.r;
+    const rGear = rArr[FIFTH_BAND_INDEX] - rArr[FIFTH_BAND_INDEX + 1];
+    const rParent = rArr[innerK];
     const trackR = rParent - rGear;
+    const rC = rGear * CHILD_GEAR_RADIUS_SCALE;
+    const rG = rC * CHILD_GEAR_RADIUS_SCALE;
+    const trackGrandchild = rC + rG;
 
-    const moving = now - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS;
-    if (moving && trackR > 0 && rGear > 0) {
-      const dtRaw = lastGearFrameTime ? (now - lastGearFrameTime) / 1000 : 0;
-      const dt = Math.min(0.1, Math.max(0, dtRaw));
-      const ds = GEAR_SPEED_PX_PER_SEC * dt;
+    if (!lastMouseMoveTime || t - lastMouseMoveTime >= GEAR_MOUSE_IDLE_MS) {
+      lastGearPhysicsTime = t;
+      return;
+    }
+
+    if (!lastGearPhysicsTime) {
+      lastGearPhysicsTime = t;
+      return;
+    }
+
+    const dt = Math.min(0.1, Math.max(0, (t - lastGearPhysicsTime) / 1000));
+    lastGearPhysicsTime = t;
+    if (dt <= 0) return;
+
+    const ds = GEAR_SPEED_PX_PER_SEC * dt;
+    if (trackR > 0 && rGear > 0) {
       gearTrackAngle += ds / trackR;
       gearRollAngle += ds / rGear;
     }
-    lastGearFrameTime = now;
+    if (rGear > 0 && trackGrandchild > 0) {
+      orbitGrandchildAngle += (ds * GRANDCHILD_ORBIT_SPEED_MULT) / trackGrandchild;
+    }
+  }
 
+  function gearAnimationFrame() {
+    gearRafScheduled = false;
     render();
-
-    if (now - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
+    if (performance.now() - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
       gearRafScheduled = true;
       requestAnimationFrame(gearAnimationFrame);
     }
@@ -242,6 +279,7 @@
 
     chromaticGeom = computeChromaticGeometry(cssW, cssH);
     const { cx, r, cy } = chromaticGeom;
+    stepGearPhysics();
 
     ctx.fillStyle = '#000000';
     ctx.fillRect(0, 0, cssW, cssH);
