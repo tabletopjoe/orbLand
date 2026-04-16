@@ -18,9 +18,37 @@
   const TONIC_LABEL_LEFT_INSET_PX = 88;
   let landingConsultingActive = false;
 
-  /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. */
+  const CONTACT_EMAIL = 'consult@dianilo.onmicrosoft.com';
+  const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
+  const CONTACT_LABEL = 'CONTACT';
+  /** Envelope + CONTACT row hit area in CSS px (set while drawing consulting copy). */
+  let contactMailHitRect = null;
+  /** Clipboard icon hit area for copy-to-clipboard. */
+  let contactCopyHitRect = null;
+
+  async function copyContactEmailToClipboard() {
+    try {
+      await navigator.clipboard.writeText(CONTACT_EMAIL);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = CONTACT_EMAIL;
+      ta.setAttribute('aria-hidden', 'true');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try {
+        document.execCommand('copy');
+      } catch {
+        /* ignore */
+      }
+      document.body.removeChild(ta);
+    }
+  }
+
+  /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. (CONTACT row is drawn separately with mail link.) */
   const CONSULTING_TONIC_COPY =
-    'MICROSOFT 365\n  POWER PLATFORM\n SHAREPOINT\n TEAMS\n\n CUSTOM WEB SOLUTIONS\n';
+    'MICROSOFT 365\n  POWER PLATFORM\n SHAREPOINT\n TEAMS\n\n CUSTOM WEB SOLUTIONS';
 
   /**
    * Perfect fifth above B♭ (7 semitones, pitch class 7): band b = (11 − p) mod 12 → band 4
@@ -201,6 +229,98 @@
     return h;
   }
 
+  function pointInRect(px, py, rect) {
+    return (
+      rect &&
+      px >= rect.x &&
+      px <= rect.x + rect.w &&
+      py >= rect.y &&
+      py <= rect.y + rect.h
+    );
+  }
+
+  /** Stroked page outline with top-right dog-ear (monochrome). */
+  function strokeDogEarPage(x, y, w, h, fold) {
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + w - fold, y);
+    ctx.lineTo(x + w, y + fold);
+    ctx.lineTo(x + w, y + h);
+    ctx.lineTo(x, y + h);
+    ctx.closePath();
+    ctx.stroke();
+  }
+
+  /** Outer height of stroked copy icon for scale `s` (two offset sheets): h + shift * 1.25. */
+  const COPY_ICON_OUTER_H_FACTOR = 1.08 + 0.14 * 1.25;
+
+  function copyIconStrokeWidthForOuterHeight(targetOuterHeight) {
+    const s = Math.max(4, targetOuterHeight) / COPY_ICON_OUTER_H_FACTOR;
+    return Math.max(1, s * (0.02 / 0.42));
+  }
+
+  /** Simple mail envelope outline (V flap); stroke matches copy icon weight when lineWidth matches. */
+  function drawEnvelopeStroked(leftX, yMid, w, h, lineWidth) {
+    const topY = yMid - h / 2;
+    const flapDepth = Math.max(2, h * 0.38);
+    const mx = leftX + w / 2;
+    const fy = topY + flapDepth;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    // Body: full rectangle (include top horizontal; old path skipped TR→TL).
+    ctx.moveTo(leftX, topY + h);
+    ctx.lineTo(leftX + w, topY + h);
+    ctx.lineTo(leftX + w, topY);
+    ctx.lineTo(leftX, topY);
+    ctx.lineTo(leftX, topY + h);
+    // Flap: V from top corners to apex (separate subpath so top edge stays closed).
+    ctx.moveTo(leftX, topY);
+    ctx.lineTo(mx, fy);
+    ctx.lineTo(leftX + w, topY);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  /**
+   * Two overlapping outlined pages (copy metaphor). Returns bounding box in CSS px.
+   * @param {number} leftX left edge of icon
+   * @param {number} yMid vertical center (aligns with CONTACT row)
+   * @param {number} targetOuterHeight total icon bbox height (slightly above CONTACT word height)
+   */
+  function drawCopyIconStroked(leftX, yMid, targetOuterHeight) {
+    const s = Math.max(4, targetOuterHeight) / COPY_ICON_OUTER_H_FACTOR;
+    const w = s * 0.9;
+    const h = s * 1.08;
+    const fold = Math.max(2.2, s * 0.17);
+    const shift = s * 0.14;
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.lineWidth = copyIconStrokeWidthForOuterHeight(targetOuterHeight);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+
+    const bx = leftX;
+    const by = yMid - h / 2 - shift * 0.9;
+    const fx = leftX + shift;
+    const fy = yMid - h / 2 + shift * 0.35;
+
+    strokeDogEarPage(bx, by, w, h, fold);
+    strokeDogEarPage(fx, fy, w, h, fold);
+    ctx.restore();
+
+    const left = Math.min(bx, fx);
+    const top = Math.min(by, fy);
+    const right = Math.max(bx + w, fx + w);
+    const bottom = Math.max(by + h, fy + h);
+    return { x: left, y: top, w: right - left, h: bottom - top };
+  }
+
   /** Fills wrapped consulting copy inside the innermost (tonic) circle. */
   function drawConsultingTonicText(centerX, centerY, rInner) {
     ctx.save();
@@ -219,7 +339,8 @@
 
     const lines = wrapCanvasTextLines(CONSULTING_TONIC_COPY, maxW);
     const lineHeight = fontSize * 1.38;
-    const totalH = consultingWrappedBlockHeight(lines, lineHeight);
+    const contactRowH = lineHeight;
+    const totalH = consultingWrappedBlockHeight(lines, lineHeight) + contactRowH;
     const textLeftX = centerX - rInner + pad + TONIC_LABEL_LEFT_INSET_PX;
     let y = centerY - totalH / 2 + lineHeight / 2;
     for (const ln of lines) {
@@ -230,6 +351,37 @@
       ctx.fillText(ln, textLeftX, y);
       y += lineHeight;
     }
+
+    const iconGap = fontSize * 0.28;
+    const tmContact = ctx.measureText(CONTACT_LABEL);
+    const labelW = tmContact.width;
+    const contactTextH =
+      (tmContact.actualBoundingBoxAscent != null ? tmContact.actualBoundingBoxAscent : fontSize * 0.72) +
+      (tmContact.actualBoundingBoxDescent != null ? tmContact.actualBoundingBoxDescent : fontSize * 0.18);
+    const copyIconOuterH = contactTextH + 4;
+    const envW = ctx.measureText('\u2709').width;
+    const envStroke = copyIconStrokeWidthForOuterHeight(copyIconOuterH);
+    drawEnvelopeStroked(textLeftX, y, envW, contactTextH, envStroke);
+    const contactTextX = textLeftX + envW + iconGap;
+    ctx.fillText(CONTACT_LABEL, contactTextX, y);
+    const afterLabelGap = Math.max(fontSize * 0.35, 16);
+    const copyIconX = contactTextX + labelW + afterLabelGap;
+    const copyBounds = drawCopyIconStroked(copyIconX, y, copyIconOuterH);
+
+    const hitPad = 6;
+    contactMailHitRect = {
+      x: textLeftX - hitPad,
+      y: y - lineHeight / 2,
+      w: contactTextX + labelW - textLeftX + hitPad * 2,
+      h: lineHeight
+    };
+    contactCopyHitRect = {
+      x: copyBounds.x - hitPad,
+      y: copyBounds.y - hitPad,
+      w: copyBounds.w + hitPad * 2,
+      h: copyBounds.h + hitPad * 2
+    };
+
     ctx.restore();
   }
 
@@ -356,6 +508,8 @@
 
     chromaticGeom = computeChromaticGeometry(cssW, cssH);
     const { cx, r, cy } = chromaticGeom;
+    contactMailHitRect = null;
+    contactCopyHitRect = null;
     stepGearPhysics();
 
     ctx.fillStyle = '#000000';
@@ -409,12 +563,32 @@
   canvas.addEventListener('mousemove', (e) => {
     bumpMouseForGear();
     const { x, y } = canvasCssCoordsFromEvent(e);
-    canvas.style.cursor = 'default';
+    if (
+      landingConsultingActive &&
+      (pointInRect(x, y, contactMailHitRect) || pointInRect(x, y, contactCopyHitRect))
+    ) {
+      canvas.style.cursor = 'pointer';
+    } else {
+      canvas.style.cursor = 'default';
+    }
     if (chordLinkIndex !== null) return;
     const band = chromaticGeom ? hitTestBand(x, y, chromaticGeom) : null;
     if (band !== hoverBand) {
       hoverBand = band;
       render();
+    }
+  });
+
+  canvas.addEventListener('click', (e) => {
+    const { x, y } = canvasCssCoordsFromEvent(e);
+    if (landingConsultingActive && pointInRect(x, y, contactCopyHitRect)) {
+      e.preventDefault();
+      void copyContactEmailToClipboard();
+      return;
+    }
+    if (landingConsultingActive && pointInRect(x, y, contactMailHitRect)) {
+      e.preventDefault();
+      window.location.href = CONTACT_MAILTO;
     }
   });
 
@@ -464,6 +638,14 @@
 
   function applyConsultingMode(active) {
     landingConsultingActive = active;
+    const consultingEl = document.getElementById('landing-link-consulting');
+    if (consultingEl) {
+      consultingEl.classList.toggle('landing-link--consulting-active', active);
+    }
+    const floatEl = document.getElementById('landing-slider-float');
+    if (floatEl) {
+      floatEl.classList.toggle('landing-slider-float--consulting-hidden', active);
+    }
     const slider = document.getElementById('landing-ring-size-slider');
     if (slider) {
       if (active) {

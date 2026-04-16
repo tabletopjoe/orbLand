@@ -61,7 +61,8 @@ body {
     color 0.2s ease;
 }
 
-.landing-link:hover {
+.landing-link:hover,
+.landing-link.landing-link--consulting-active {
   color: var(--landing-ui-hover);
   transform: scale(2);
 }
@@ -94,6 +95,11 @@ body {
 }
 
 .landing-slider-float--controls-hidden .landing-slider-controls {
+  display: none;
+}
+
+/* Hide entire #landing-slider-float (moon toggle + .landing-slider-controls and any future controls). */
+.landing-slider-float--consulting-hidden {
   display: none;
 }
 
