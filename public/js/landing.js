@@ -23,6 +23,8 @@
   const CONTACT_LABEL = 'CONTACT';
   /** Envelope + CONTACT row hit area in CSS px (set while drawing consulting copy). */
   let contactMailHitRect = null;
+  /** Envelope icon only (tooltips). */
+  let contactEnvelopeHitRect = null;
   /** Clipboard icon hit area for copy-to-clipboard. */
   let contactCopyHitRect = null;
 
@@ -101,6 +103,17 @@
   let hoverBand = null;
   /** @type {number | null} */
   let chordLinkIndex = null;
+  /** Band lit by strum animation (null = idle). Same colors as hover via {@link spectrumIndexForBand}. */
+  let strumHighlightBand = null;
+  let strumAnimToken = 0;
+  /** @type {ReturnType<typeof setTimeout> | null} */
+  let strumTimerId = null;
+
+  /**
+   * Circle centers increase in x from inner (k=12) to outer (k=0); bands sit between k and k+1.
+   * Left→right strum: band 11 (inner gap) … band 0 (outer gap).
+   */
+  const STRUM_BAND_ORDER_LTR = Array.from({ length: BAND_COUNT }, (_, i) => BAND_COUNT - 1 - i);
 
   const innerK = CHROMATIC_STEPS - 1;
   /** Angle (rad) of gear center on its track around the parent center; + = clockwise on screen. */
@@ -167,6 +180,18 @@
       if (dist(k) <= r[k] && dist(k + 1) > r[k + 1]) return k;
     }
     return null;
+  }
+
+  /** True if (px,py) lies inside any chromatic ring disk (the drawn circle design). */
+  function pointInChromaticDesign(px, py, g) {
+    if (!g) return false;
+    const { cx, r, cy } = g;
+    for (let k = 0; k < CHROMATIC_STEPS; k++) {
+      const dx = px - cx[k];
+      const dy = py - cy;
+      if (dx * dx + dy * dy <= r[k] * r[k]) return true;
+    }
+    return false;
   }
 
   function fillCircleOnly(ax, ay, r) {
@@ -237,6 +262,39 @@
       py >= rect.y &&
       py <= rect.y + rect.h
     );
+  }
+
+  function showContactTooltip(text, clientX, clientY) {
+    const el = document.getElementById('landing-contact-tooltip');
+    if (!el) return;
+    el.textContent = text;
+    el.removeAttribute('hidden');
+    const pad = 12;
+    el.style.left = `${clientX + pad}px`;
+    el.style.top = `${clientY + pad}px`;
+    requestAnimationFrame(() => {
+      const r = el.getBoundingClientRect();
+      let left = clientX + pad;
+      let top = clientY + pad;
+      const margin = 8;
+      if (left + r.width > window.innerWidth - margin) {
+        left = window.innerWidth - r.width - margin;
+      }
+      if (top + r.height > window.innerHeight - margin) {
+        top = clientY - r.height - pad;
+      }
+      if (left < margin) left = margin;
+      if (top < margin) top = margin;
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+    });
+  }
+
+  function hideContactTooltip() {
+    const el = document.getElementById('landing-contact-tooltip');
+    if (!el) return;
+    el.setAttribute('hidden', '');
+    el.textContent = '';
   }
 
   /** Stroked page outline with top-right dog-ear (monochrome). */
@@ -369,6 +427,13 @@
     const copyBounds = drawCopyIconStroked(copyIconX, y, copyIconOuterH);
 
     const hitPad = 6;
+    const envTop = y - contactTextH / 2;
+    contactEnvelopeHitRect = {
+      x: textLeftX - hitPad,
+      y: envTop - hitPad,
+      w: envW + hitPad * 2,
+      h: contactTextH + hitPad * 2
+    };
     contactMailHitRect = {
       x: textLeftX - hitPad,
       y: y - lineHeight / 2,
@@ -497,6 +562,63 @@
     ctx.fill('evenodd');
   }
 
+  function cancelChromaticStrum() {
+    strumAnimToken++;
+    if (strumTimerId !== null) {
+      clearTimeout(strumTimerId);
+      strumTimerId = null;
+    }
+    strumHighlightBand = null;
+    render();
+  }
+
+  /**
+   * “Strum” the chromatic rings: each band flashes its spectrum color in sequence (left→right by default).
+   * @param {object} [options]
+   * @param {number} [options.msPerBand] Delay between bands (default ~52).
+   * @param {boolean} [options.reverse] If true, strum outer→inner (right→left).
+   * @param {() => void} [options.onComplete] Called after the last band clears.
+   */
+  function chromaticStrum(options = {}) {
+    const msPerBand = options.msPerBand ?? 52;
+    const reverse = options.reverse === true;
+    const onComplete = typeof options.onComplete === 'function' ? options.onComplete : null;
+    const order = reverse ? Array.from({ length: BAND_COUNT }, (_, i) => i) : STRUM_BAND_ORDER_LTR;
+
+    strumAnimToken++;
+    const token = strumAnimToken;
+    if (strumTimerId !== null) {
+      clearTimeout(strumTimerId);
+      strumTimerId = null;
+    }
+
+    let i = 0;
+    function step() {
+      if (token !== strumAnimToken) return;
+      strumHighlightBand = order[i];
+      render();
+      if (i < BAND_COUNT - 1) {
+        i++;
+        strumTimerId = setTimeout(step, msPerBand);
+      } else {
+        strumTimerId = setTimeout(() => {
+          if (token !== strumAnimToken) return;
+          strumHighlightBand = null;
+          strumTimerId = null;
+          render();
+          if (onComplete) {
+            try {
+              onComplete();
+            } catch {
+              /* ignore */
+            }
+          }
+        }, msPerBand);
+      }
+    }
+    step();
+  }
+
   function render() {
     const dpr = window.devicePixelRatio || 1;
     const cssW = window.innerWidth;
@@ -509,6 +631,7 @@
     chromaticGeom = computeChromaticGeometry(cssW, cssH);
     const { cx, r, cy } = chromaticGeom;
     contactMailHitRect = null;
+    contactEnvelopeHitRect = null;
     contactCopyHitRect = null;
     stepGearPhysics();
 
@@ -519,7 +642,16 @@
       fillCircleOnly(cx[k], cy, r[k]);
     }
 
-    if (chordLinkIndex !== null && CHORD_LINK_PATTERNS[chordLinkIndex]) {
+    /* Strum must paint above nav-link chord hover so clicks (e.g. CONSULTING) show strum while pointer stays on the link. */
+    if (
+      strumHighlightBand !== null &&
+      strumHighlightBand >= 0 &&
+      strumHighlightBand < BAND_COUNT
+    ) {
+      const b = strumHighlightBand;
+      const c = HOVER_SPECTRUM[spectrumIndexForBand(b)];
+      fillBandAnnulus(cx[b], cy, r[b], cx[b + 1], cy, r[b + 1], c);
+    } else if (chordLinkIndex !== null && CHORD_LINK_PATTERNS[chordLinkIndex]) {
       const pat = CHORD_LINK_PATTERNS[chordLinkIndex];
       for (let j = 0; j < pat.bands.length; j++) {
         const b = pat.bands[j];
@@ -563,13 +695,23 @@
   canvas.addEventListener('mousemove', (e) => {
     bumpMouseForGear();
     const { x, y } = canvasCssCoordsFromEvent(e);
-    if (
-      landingConsultingActive &&
-      (pointInRect(x, y, contactMailHitRect) || pointInRect(x, y, contactCopyHitRect))
-    ) {
-      canvas.style.cursor = 'pointer';
+    if (landingConsultingActive) {
+      if (pointInRect(x, y, contactCopyHitRect)) {
+        canvas.style.cursor = 'pointer';
+        showContactTooltip('Copy Email', e.clientX, e.clientY);
+      } else if (pointInRect(x, y, contactEnvelopeHitRect)) {
+        canvas.style.cursor = 'pointer';
+        showContactTooltip('Send Email', e.clientX, e.clientY);
+      } else if (pointInRect(x, y, contactMailHitRect)) {
+        canvas.style.cursor = 'pointer';
+        hideContactTooltip();
+      } else {
+        canvas.style.cursor = 'default';
+        hideContactTooltip();
+      }
     } else {
       canvas.style.cursor = 'default';
+      hideContactTooltip();
     }
     if (chordLinkIndex !== null) return;
     const band = chromaticGeom ? hitTestBand(x, y, chromaticGeom) : null;
@@ -589,10 +731,15 @@
     if (landingConsultingActive && pointInRect(x, y, contactMailHitRect)) {
       e.preventDefault();
       window.location.href = CONTACT_MAILTO;
+      return;
+    }
+    if (chromaticGeom && pointInChromaticDesign(x, y, chromaticGeom)) {
+      chromaticStrum();
     }
   });
 
   canvas.addEventListener('mouseleave', () => {
+    hideContactTooltip();
     if (hoverBand !== null) {
       hoverBand = null;
       render();
@@ -626,6 +773,7 @@
   const landingToggle = document.getElementById('landing-controls-toggle');
   if (landingFloat && landingToggle) {
     landingToggle.addEventListener('click', () => {
+      chromaticStrum();
       landingFloat.classList.toggle('landing-slider-float--controls-hidden');
       const hidden = landingFloat.classList.contains('landing-slider-float--controls-hidden');
       landingToggle.setAttribute('aria-expanded', String(!hidden));
@@ -638,6 +786,9 @@
 
   function applyConsultingMode(active) {
     landingConsultingActive = active;
+    if (!active) {
+      hideContactTooltip();
+    }
     const consultingEl = document.getElementById('landing-link-consulting');
     if (consultingEl) {
       consultingEl.classList.toggle('landing-link--consulting-active', active);
@@ -664,6 +815,7 @@
   if (consultingLink) {
     consultingLink.addEventListener('click', (e) => {
       e.preventDefault();
+      chromaticStrum();
       applyConsultingMode(!landingConsultingActive);
     });
   }
@@ -689,6 +841,9 @@
       }
     });
   });
+
+  window.chromaticStrum = chromaticStrum;
+  window.cancelChromaticStrum = cancelChromaticStrum;
 
   render();
 })();
