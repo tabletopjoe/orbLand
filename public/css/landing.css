@@ -64,7 +64,8 @@ body {
 }
 
 .landing-link:hover,
-.landing-link.landing-link--consulting-active {
+.landing-link.landing-link--consulting-active,
+.landing-link.landing-link--about-active {
   color: var(--landing-ui-hover);
   transform: scale(2);
 }

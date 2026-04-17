@@ -12,11 +12,12 @@
   const CHROMATIC_SCALE = 0.85;
   /** Uniform scale: 1 = default; slider 25–300 → 0.25× … 3× (semitone ring ratios unchanged). */
   let ringSizeMultiplier = 1;
-  /** CONSULTING link: 208% rings, semi-transparent gears, copy inside the tonic disk. */
+  /** CONSULTING / ABOUT: 208% rings, semi-transparent gears, copy inside the tonic disk. */
   const CONSULTING_RING_SLIDER_PCT = 208;
   /** Shift tonic label block inward from the disk’s left edge (CSS px). */
   const TONIC_LABEL_LEFT_INSET_PX = 88;
-  let landingConsultingActive = false;
+  /** null = default view; otherwise which tonic overlay is shown (mutually exclusive). */
+  let landingTonicMode = /** @type {null | 'consulting' | 'about'} */ (null);
 
   const CONTACT_EMAIL = 'consult@dianilo.onmicrosoft.com';
   const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
@@ -51,6 +52,10 @@
   /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. (CONTACT row is drawn separately with mail link.) */
   const CONSULTING_TONIC_COPY =
     'MICROSOFT 365\n  POWER PLATFORM\n SHAREPOINT\n TEAMS\n\n CUSTOM WEB SOLUTIONS';
+
+  /** Body text for ABOUT (same layout as consulting; no CONTACT row). Edit here. */
+  const ABOUT_TONIC_COPY = 
+  'ABOUT\n\nUS Army Signal Corps 2003-2007\n Dept. of State Overseas Buildings Operations 2007-2014\n Dept. of State Office of Inspector General 2014-2022\n NASA Mission Support Directorate 2022-2026\n\n EDUCATION\n\n George Mason University 2009-2012\n B.A. History, cum laude ';
 
   /**
    * Perfect fifth above B♭ (7 semitones, pitch class 7): band b = (11 − p) mod 12 → band 4
@@ -156,8 +161,8 @@
   let fifthChildOrbitAngle = -Math.PI / 2;
   /** Rolling angle for no-slip motion on the outside of the fifth mini (rad). */
   let fifthChildRollAngle = 0;
-  /** Orbit angle around circle {@link TWELFTH_BAND_ORBIT_HOST_K} (world). */
-  let twelfthOrbitGearAngle = -Math.PI / 2;
+  /** Orbit angle around circle {@link TWELFTH_BAND_ORBIT_HOST_K} (world); 0 = 3 o'clock, π/6 ≈ 4 o'clock. */
+  let twelfthOrbitGearAngle = Math.PI / 6;
   /** Roll for 12th-ring exterior gear (rad). */
   let twelfthOrbitGearRoll = 0;
   let lastMouseMoveTime = 0;
@@ -416,8 +421,12 @@
     return { x: left, y: top, w: right - left, h: bottom - top };
   }
 
-  /** Fills wrapped consulting copy inside the innermost (tonic) circle. */
-  function drawConsultingTonicText(centerX, centerY, rInner) {
+  /** Fills wrapped copy inside the innermost (tonic) circle. CONTACT row only in consulting mode. */
+  function drawTonicOverlayText(centerX, centerY, rInner) {
+    if (!landingTonicMode) return;
+    const bodyCopy = landingTonicMode === 'consulting' ? CONSULTING_TONIC_COPY : ABOUT_TONIC_COPY;
+    const includeContact = landingTonicMode === 'consulting';
+
     ctx.save();
     ctx.beginPath();
     ctx.arc(centerX, centerY, Math.max(1, rInner - 3), 0, Math.PI * 2);
@@ -426,63 +435,77 @@
     const pad = Math.max(10, rInner * 0.14);
     const maxW = Math.max(40, (rInner - pad) * 2);
     const fontSizeBase = Math.max(9, Math.min(13, rInner / 4.5));
-    const fontSize = fontSizeBase * 3;
+    const fontSize = fontSizeBase * 3 * (includeContact ? 1 : 0.7);
     ctx.font = `400 ${fontSize}px Poppins, system-ui, sans-serif`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
 
-    const lines = wrapCanvasTextLines(CONSULTING_TONIC_COPY, maxW);
+    const lines = wrapCanvasTextLines(bodyCopy, maxW);
     const lineHeight = fontSize * 1.38;
-    const contactRowH = lineHeight;
-    const totalH = consultingWrappedBlockHeight(lines, lineHeight) + contactRowH;
     const textLeftX = centerX - rInner + pad + TONIC_LABEL_LEFT_INSET_PX;
-    let y = centerY - totalH / 2 + lineHeight / 2;
-    for (const ln of lines) {
-      if (ln === '') {
-        y += lineHeight * 0.55;
-        continue;
+
+    if (includeContact) {
+      const contactRowH = lineHeight;
+      const totalH = consultingWrappedBlockHeight(lines, lineHeight) + contactRowH;
+      let y = centerY - totalH / 2 + lineHeight / 2;
+      for (const ln of lines) {
+        if (ln === '') {
+          y += lineHeight * 0.55;
+          continue;
+        }
+        ctx.fillText(ln, textLeftX, y);
+        y += lineHeight;
       }
-      ctx.fillText(ln, textLeftX, y);
-      y += lineHeight;
+
+      const iconGap = fontSize * 0.28;
+      const tmContact = ctx.measureText(CONTACT_LABEL);
+      const labelW = tmContact.width;
+      const contactTextH =
+        (tmContact.actualBoundingBoxAscent != null ? tmContact.actualBoundingBoxAscent : fontSize * 0.72) +
+        (tmContact.actualBoundingBoxDescent != null ? tmContact.actualBoundingBoxDescent : fontSize * 0.18);
+      const copyIconOuterH = contactTextH + 4;
+      const envW = ctx.measureText('\u2709').width;
+      const envStroke = copyIconStrokeWidthForOuterHeight(copyIconOuterH);
+      drawEnvelopeStroked(textLeftX, y, envW, contactTextH, envStroke);
+      const contactTextX = textLeftX + envW + iconGap;
+      ctx.fillText(CONTACT_LABEL, contactTextX, y);
+      const afterLabelGap = Math.max(fontSize * 0.35, 16);
+      const copyIconX = contactTextX + labelW + afterLabelGap;
+      const copyBounds = drawCopyIconStroked(copyIconX, y, copyIconOuterH);
+
+      const hitPad = 6;
+      const envTop = y - contactTextH / 2;
+      contactEnvelopeHitRect = {
+        x: textLeftX - hitPad,
+        y: envTop - hitPad,
+        w: envW + hitPad * 2,
+        h: contactTextH + hitPad * 2
+      };
+      contactMailHitRect = {
+        x: textLeftX - hitPad,
+        y: y - lineHeight / 2,
+        w: contactTextX + labelW - textLeftX + hitPad * 2,
+        h: lineHeight
+      };
+      contactCopyHitRect = {
+        x: copyBounds.x - hitPad,
+        y: copyBounds.y - hitPad,
+        w: copyBounds.w + hitPad * 2,
+        h: copyBounds.h + hitPad * 2
+      };
+    } else {
+      const totalH = consultingWrappedBlockHeight(lines, lineHeight);
+      let y = centerY - totalH / 2 + lineHeight / 2;
+      for (const ln of lines) {
+        if (ln === '') {
+          y += lineHeight * 0.55;
+          continue;
+        }
+        ctx.fillText(ln, textLeftX, y);
+        y += lineHeight;
+      }
     }
-
-    const iconGap = fontSize * 0.28;
-    const tmContact = ctx.measureText(CONTACT_LABEL);
-    const labelW = tmContact.width;
-    const contactTextH =
-      (tmContact.actualBoundingBoxAscent != null ? tmContact.actualBoundingBoxAscent : fontSize * 0.72) +
-      (tmContact.actualBoundingBoxDescent != null ? tmContact.actualBoundingBoxDescent : fontSize * 0.18);
-    const copyIconOuterH = contactTextH + 4;
-    const envW = ctx.measureText('\u2709').width;
-    const envStroke = copyIconStrokeWidthForOuterHeight(copyIconOuterH);
-    drawEnvelopeStroked(textLeftX, y, envW, contactTextH, envStroke);
-    const contactTextX = textLeftX + envW + iconGap;
-    ctx.fillText(CONTACT_LABEL, contactTextX, y);
-    const afterLabelGap = Math.max(fontSize * 0.35, 16);
-    const copyIconX = contactTextX + labelW + afterLabelGap;
-    const copyBounds = drawCopyIconStroked(copyIconX, y, copyIconOuterH);
-
-    const hitPad = 6;
-    const envTop = y - contactTextH / 2;
-    contactEnvelopeHitRect = {
-      x: textLeftX - hitPad,
-      y: envTop - hitPad,
-      w: envW + hitPad * 2,
-      h: contactTextH + hitPad * 2
-    };
-    contactMailHitRect = {
-      x: textLeftX - hitPad,
-      y: y - lineHeight / 2,
-      w: contactTextX + labelW - textLeftX + hitPad * 2,
-      h: lineHeight
-    };
-    contactCopyHitRect = {
-      x: copyBounds.x - hitPad,
-      y: copyBounds.y - hitPad,
-      w: copyBounds.w + hitPad * 2,
-      h: copyBounds.h + hitPad * 2
-    };
 
     ctx.restore();
   }
@@ -739,13 +762,13 @@
       strokeCircleOnly(cx[k], cy, r[k]);
     }
 
-    if (landingConsultingActive) {
-      drawConsultingTonicText(cx[innerK], cy, r[innerK]);
+    if (landingTonicMode) {
+      drawTonicOverlayText(cx[innerK], cy, r[innerK]);
     }
 
     const rGear = r[FIFTH_BAND_INDEX] - r[FIFTH_BAND_INDEX + 1];
     const trackR = r[innerK] - rGear;
-    const gearAlpha = landingConsultingActive ? 0.5 : 1;
+    const gearAlpha = landingTonicMode ? 0.5 : 1;
     ctx.save();
     ctx.globalAlpha = gearAlpha;
     if (trackR > 0 && rGear > 0) {
@@ -790,7 +813,7 @@
   canvas.addEventListener('mousemove', (e) => {
     bumpMouseForGear();
     const { x, y } = canvasCssCoordsFromEvent(e);
-    if (landingConsultingActive) {
+    if (landingTonicMode === 'consulting') {
       if (pointInRect(x, y, contactCopyHitRect)) {
         canvas.style.cursor = 'pointer';
         showContactTooltip('Copy Email', e.clientX, e.clientY);
@@ -818,12 +841,12 @@
 
   canvas.addEventListener('click', (e) => {
     const { x, y } = canvasCssCoordsFromEvent(e);
-    if (landingConsultingActive && pointInRect(x, y, contactCopyHitRect)) {
+    if (landingTonicMode === 'consulting' && pointInRect(x, y, contactCopyHitRect)) {
       e.preventDefault();
       void copyContactEmailToClipboard();
       return;
     }
-    if (landingConsultingActive && pointInRect(x, y, contactMailHitRect)) {
+    if (landingTonicMode === 'consulting' && pointInRect(x, y, contactMailHitRect)) {
       e.preventDefault();
       window.location.href = CONTACT_MAILTO;
       return;
@@ -943,22 +966,26 @@
     });
   }
 
-  function applyConsultingMode(active) {
-    landingConsultingActive = active;
-    if (!active) {
+  function applyTonicMode(mode) {
+    landingTonicMode = mode;
+    if (mode !== 'consulting') {
       hideContactTooltip();
     }
     const consultingEl = document.getElementById('landing-link-consulting');
     if (consultingEl) {
-      consultingEl.classList.toggle('landing-link--consulting-active', active);
+      consultingEl.classList.toggle('landing-link--consulting-active', mode === 'consulting');
+    }
+    const aboutEl = document.getElementById('landing-link-about');
+    if (aboutEl) {
+      aboutEl.classList.toggle('landing-link--about-active', mode === 'about');
     }
     const floatEl = document.getElementById('landing-slider-float');
     if (floatEl) {
-      floatEl.classList.toggle('landing-slider-float--consulting-hidden', active);
+      floatEl.classList.toggle('landing-slider-float--consulting-hidden', mode !== null);
     }
     const slider = document.getElementById('landing-ring-size-slider');
     if (slider) {
-      if (active) {
+      if (mode !== null) {
         slider.value = String(CONSULTING_RING_SLIDER_PCT);
         ringSizeMultiplier = CONSULTING_RING_SLIDER_PCT / 100;
       } else {
@@ -975,13 +1002,22 @@
     consultingLink.addEventListener('click', (e) => {
       e.preventDefault();
       chromaticStrum();
-      applyConsultingMode(!landingConsultingActive);
+      applyTonicMode(landingTonicMode === 'consulting' ? null : 'consulting');
+    });
+  }
+
+  const aboutLink = document.getElementById('landing-link-about');
+  if (aboutLink) {
+    aboutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      chromaticStrum();
+      applyTonicMode(landingTonicMode === 'about' ? null : 'about');
     });
   }
 
   document.querySelectorAll('.landing-link').forEach((a, i) => {
     a.addEventListener('click', (e) => {
-      if (a.id === 'landing-link-consulting') return;
+      if (a.id === 'landing-link-consulting' || a.id === 'landing-link-about') return;
       const href = a.getAttribute('href');
       if (!href || href === '#') e.preventDefault();
     });
