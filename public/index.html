@@ -78,11 +78,11 @@
             type="range"
             id="landing-gear-main-speed"
             class="landing-vertical-slider"
-            min="1"
-            max="120"
+            min="-20"
+            max="20"
             value="3"
             step="1"
-            aria-label="Tonic gear: minutes per full orbit"
+            aria-label="Tonic gear: minutes per orbit (negative reverses, zero stops)"
           />
         </div>
         <div
@@ -100,11 +100,11 @@
             type="range"
             id="landing-gear-fifth-speed"
             class="landing-vertical-slider"
-            min="1"
-            max="120"
+            min="-20"
+            max="20"
             value="3"
             step="1"
-            aria-label="Fifth orbit gear: minutes per full orbit"
+            aria-label="Fifth orbit gear: minutes per orbit (negative reverses, zero stops)"
           />
         </div>
         <div
@@ -122,11 +122,11 @@
             type="range"
             id="landing-gear-fifth-child-speed"
             class="landing-vertical-slider"
-            min="1"
-            max="120"
+            min="-20"
+            max="20"
             value="1"
             step="1"
-            aria-label="Fifth mini gear child: minutes per orbit around parent"
+            aria-label="Fifth mini gear child: minutes per orbit (negative reverses, zero stops)"
           />
         </div>
         <div
@@ -135,6 +135,28 @@
           aria-live="polite"
         >
           1 min
+        </div>
+      </div>
+      <div class="landing-slider-cell">
+        <label for="landing-gear-twelfth-speed">12th band</label>
+        <div class="landing-slider-wrap">
+          <input
+            type="range"
+            id="landing-gear-twelfth-speed"
+            class="landing-vertical-slider"
+            min="-20"
+            max="20"
+            value="3"
+            step="1"
+            aria-label="12th band orbit gear: minutes per orbit (negative reverses, zero stops)"
+          />
+        </div>
+        <div
+          class="landing-ring-size-pct landing-gear-speed-readout"
+          id="landing-gear-twelfth-speed-readout"
+          aria-live="polite"
+        >
+          3 min
         </div>
       </div>
     </div>

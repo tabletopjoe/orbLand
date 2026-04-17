@@ -1,7 +1,9 @@
 :root {
   --landing-ui: rgba(255, 255, 255, 0.7);
   --landing-ui-hover: rgba(255, 255, 255, 0.95);
-  --landing-thumb-size: 16px;
+  --landing-thumb-size: 24px;
+  /** Vertical track length (after −90° rotation); was 72px, +50%. */
+  --landing-slider-track: 108px;
   --landing-control-track: rgba(255, 255, 255, 0.14);
 }
 
@@ -174,12 +176,12 @@ body {
 }
 
 .landing-gear-speed-readout {
-  min-width: 3.25rem;
+  min-width: 3.5rem;
 }
 
 .landing-slider-wrap {
   container-type: size;
-  height: 72px;
+  height: var(--landing-slider-track);
   width: var(--landing-thumb-size);
   display: flex;
   align-items: center;
@@ -187,7 +189,7 @@ body {
 }
 
 .landing-vertical-slider {
-  width: 72px;
+  width: var(--landing-slider-track);
   height: var(--landing-thumb-size);
   -webkit-appearance: none;
   appearance: none;
@@ -221,9 +223,9 @@ body {
   border-radius: 4px;
 }
 
-@container (max-height: 71px) {
+@container (max-height: 107px) {
   .landing-slider-wrap .landing-vertical-slider {
-    transform: rotate(-90deg) scale(min(1, calc(100cqh / 72px)));
+    transform: rotate(-90deg) scale(min(1, calc(100cqh / 108px)));
   }
 }
 
@@ -247,7 +249,7 @@ body {
 
 @media (max-width: 640px) {
   :root {
-    --landing-thumb-size: 18px;
+    --landing-thumb-size: 27px;
   }
 
   .landing-slider-float {
