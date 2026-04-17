@@ -58,11 +58,13 @@
    * 2·(r[4] − r[5]), radius = r[4] − r[5]. It rolls along the inside of the innermost ring.
    */
   const FIFTH_BAND_INDEX = 4;
-  /** Arc length along the gear’s center track per second (px/s in CSS pixels). */
+  /** Gear center orbits the tonic track at this rate (rad/s): one full revolution every 3 min. */
+  const GEAR_TRACK_ANGULAR_SPEED_RAD_PER_SEC = (2 * Math.PI) / (3 * 60);
+  /** Extra arc length along the track from mouse activity (px/s); added while pointer recently moved. */
   const GEAR_SPEED_PX_PER_SEC = 15;
   /** Multiply grandchild orbit angular speed vs the main gear path (same linear ds). */
   const GRANDCHILD_ORBIT_SPEED_MULT = 8;
-  /** Keep rolling briefly after the last mousemove so motion stays smooth. */
+  /** Window after mousemove during which {@link GEAR_SPEED_PX_PER_SEC} is applied on top of base orbit. */
   const GEAR_MOUSE_IDLE_MS = 120;
   /** Child gear at parent spoke tip: radius relative to parent gear radius. */
   const CHILD_GEAR_RADIUS_SCALE = 0.75;
@@ -125,7 +127,6 @@
   let lastMouseMoveTime = 0;
   /** Wall clock for gear physics integrated inside render() (any redraw path). */
   let lastGearPhysicsTime = 0;
-  let gearRafScheduled = false;
   let cachedCanvasCssW = 0;
   let cachedCanvasCssH = 0;
 
@@ -502,13 +503,9 @@
 
   function bumpMouseForGear() {
     lastMouseMoveTime = performance.now();
-    if (!gearRafScheduled) {
-      gearRafScheduled = true;
-      requestAnimationFrame(gearAnimationFrame);
-    }
   }
 
-  /** Advance track / roll / grandchild orbit from real time (runs every render while active). */
+  /** Advance track / roll / grandchild orbit from real time (runs each render via continuous RAF). */
   function stepGearPhysics() {
     const t = performance.now();
     if (!chromaticGeom) return;
@@ -521,11 +518,6 @@
     const rG = rC * CHILD_GEAR_RADIUS_SCALE;
     const trackGrandchild = rC + rG;
 
-    if (!lastMouseMoveTime || t - lastMouseMoveTime >= GEAR_MOUSE_IDLE_MS) {
-      lastGearPhysicsTime = t;
-      return;
-    }
-
     if (!lastGearPhysicsTime) {
       lastGearPhysicsTime = t;
       return;
@@ -535,7 +527,11 @@
     lastGearPhysicsTime = t;
     if (dt <= 0) return;
 
-    const ds = GEAR_SPEED_PX_PER_SEC * dt;
+    let ds = trackR * GEAR_TRACK_ANGULAR_SPEED_RAD_PER_SEC * dt;
+    if (lastMouseMoveTime > 0 && t - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
+      ds += GEAR_SPEED_PX_PER_SEC * dt;
+    }
+
     if (trackR > 0 && rGear > 0) {
       gearTrackAngle += ds / trackR;
       gearRollAngle += ds / rGear;
@@ -545,13 +541,9 @@
     }
   }
 
-  function gearAnimationFrame() {
-    gearRafScheduled = false;
+  function landingGearAnimationLoop() {
     render();
-    if (performance.now() - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
-      gearRafScheduled = true;
-      requestAnimationFrame(gearAnimationFrame);
-    }
+    requestAnimationFrame(landingGearAnimationLoop);
   }
 
   function fillBandAnnulus(c0x, c0y, r0, c1x, c1y, r1, color) {
@@ -845,5 +837,5 @@
   window.chromaticStrum = chromaticStrum;
   window.cancelChromaticStrum = cancelChromaticStrum;
 
-  render();
+  requestAnimationFrame(landingGearAnimationLoop);
 })();
