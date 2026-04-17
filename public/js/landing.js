@@ -58,8 +58,17 @@
    * 2·(r[4] − r[5]), radius = r[4] − r[5]. It rolls along the inside of the innermost ring.
    */
   const FIFTH_BAND_INDEX = 4;
-  /** Gear center orbits the tonic track at this rate (rad/s): one full revolution every 3 min. */
-  const GEAR_TRACK_ANGULAR_SPEED_RAD_PER_SEC = (2 * Math.PI) / (3 * 60);
+  /**
+   * Circle k = FIFTH_BAND_INDEX + 1 is the inner arc of the perfect-fifth band (band 4). Counting bands
+   * from the tonic inward, band 4 is the 8th band. The small gear rolls **outside** this circle.
+   */
+  const FIFTH_ORBIT_HOST_CIRCLE_K = FIFTH_BAND_INDEX + 1;
+  /** Minutes per full orbit; driven by #landing-gear-main-speed (default 3). */
+  let gearMainOrbitPeriodMinutes = 3;
+  /** Minutes per full orbit; driven by #landing-gear-fifth-speed (default 3). */
+  let gearFifthOrbitPeriodMinutes = 3;
+  /** Minutes per orbit of fifth child around fifth mini; driven by #landing-gear-fifth-child-speed (default 1). */
+  let gearFifthChildOrbitPeriodMinutes = 1;
   /** Extra arc length along the track from mouse activity (px/s); added while pointer recently moved. */
   const GEAR_SPEED_PX_PER_SEC = 15;
   /** Multiply grandchild orbit angular speed vs the main gear path (same linear ds). */
@@ -118,12 +127,20 @@
   const STRUM_BAND_ORDER_LTR = Array.from({ length: BAND_COUNT }, (_, i) => BAND_COUNT - 1 - i);
 
   const innerK = CHROMATIC_STEPS - 1;
-  /** Angle (rad) of gear center on its track around the parent center; + = clockwise on screen. */
-  let gearTrackAngle = -Math.PI / 2;
+  /** Angle (rad) of gear center on its track around the parent center; 0 = 3 o'clock, π/2 = 6 o'clock. Default ≈ 4:30 (bottom-right). */
+  let gearTrackAngle = Math.PI / 4;
   /** Gear rotation (rad) for rolling without slip: dφ = ds / r_gear. */
   let gearRollAngle = 0;
   /** Grandchild gear center on exterior orbit around child gear (world angle). */
   let orbitGrandchildAngle = -Math.PI / 2;
+  /** Small gear: orbit angle around the fifth-band host circle (world angle). */
+  let fifthOrbitGearAngle = -Math.PI / 2;
+  /** Rolling angle for the small fifth-orbit gear (rad). */
+  let fifthOrbitGearRoll = 0;
+  /** Child of fifth mini: orbit angle around the parent center (world). */
+  let fifthChildOrbitAngle = -Math.PI / 2;
+  /** Rolling angle for no-slip motion on the outside of the fifth mini (rad). */
+  let fifthChildRollAngle = 0;
   let lastMouseMoveTime = 0;
   /** Wall clock for gear physics integrated inside render() (any redraw path). */
   let lastGearPhysicsTime = 0;
@@ -451,6 +468,19 @@
     ctx.restore();
   }
 
+  /** Stroked gear circle only (no spoke) — fifth-orbit mini gear. */
+  function drawSimpleGearCircle(gx, gy, rGear, rollRad) {
+    ctx.save();
+    ctx.translate(gx, gy);
+    ctx.rotate(rollRad);
+    ctx.beginPath();
+    ctx.arc(0, 0, rGear, 0, Math.PI * 2);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.restore();
+  }
+
   /**
    * Parent gear → spoke → child (collinear with rollRad). Grandchild orbits **outside** the child:
    * center on a circle of radius r_child + r_grandchild around the child center.
@@ -527,7 +557,8 @@
     lastGearPhysicsTime = t;
     if (dt <= 0) return;
 
-    let ds = trackR * GEAR_TRACK_ANGULAR_SPEED_RAD_PER_SEC * dt;
+    const gearTrackRadPerSec = (2 * Math.PI) / (gearMainOrbitPeriodMinutes * 60);
+    let ds = trackR * gearTrackRadPerSec * dt;
     if (lastMouseMoveTime > 0 && t - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
       ds += GEAR_SPEED_PX_PER_SEC * dt;
     }
@@ -538,6 +569,26 @@
     }
     if (rGear > 0 && trackGrandchild > 0) {
       orbitGrandchildAngle += (ds * GRANDCHILD_ORBIT_SPEED_MULT) / trackGrandchild;
+    }
+
+    const kHost = FIFTH_ORBIT_HOST_CIRCLE_K;
+    const rHost = rArr[kHost];
+    const rTonic = rArr[innerK];
+    const rFifthMini = rTonic / 3;
+    const orbitFifthR = rHost + rFifthMini;
+    if (orbitFifthR > 0 && rFifthMini > 0) {
+      const fifthRadPerSec = (2 * Math.PI) / (gearFifthOrbitPeriodMinutes * 60);
+      const dsFifth = orbitFifthR * fifthRadPerSec * dt;
+      fifthOrbitGearAngle += dsFifth / orbitFifthR;
+      fifthOrbitGearRoll += dsFifth / rFifthMini;
+
+      const rFifthChild = rGear * CHILD_GEAR_RADIUS_SCALE;
+      const orbitAroundParentR = rFifthMini + rFifthChild;
+      if (orbitAroundParentR > 0 && rFifthChild > 0) {
+        const ωChild = (2 * Math.PI) / (gearFifthChildOrbitPeriodMinutes * 60);
+        fifthChildOrbitAngle += ωChild * dt;
+        fifthChildRollAngle += (orbitAroundParentR / rFifthChild) * ωChild * dt;
+      }
     }
   }
 
@@ -677,6 +728,22 @@
     } else {
       drawGearCircle(cx[innerK], cy, rGear, gearRollAngle);
     }
+
+    const kHost = FIFTH_ORBIT_HOST_CIRCLE_K;
+    const rFifthMini = r[innerK] / 3;
+    const orbitFifthR = r[kHost] + rFifthMini;
+    if (orbitFifthR > 0 && rFifthMini > 0) {
+      const fx = cx[kHost] + orbitFifthR * Math.cos(fifthOrbitGearAngle);
+      const fy = cy + orbitFifthR * Math.sin(fifthOrbitGearAngle);
+      drawSimpleGearCircle(fx, fy, rFifthMini, fifthOrbitGearRoll);
+      const rFifthChild = rGear * CHILD_GEAR_RADIUS_SCALE;
+      const orbitAroundParentR = rFifthMini + rFifthChild;
+      if (orbitAroundParentR > 0 && rFifthChild > 0) {
+        const ccx = fx + orbitAroundParentR * Math.cos(fifthChildOrbitAngle);
+        const ccy = fy + orbitAroundParentR * Math.sin(fifthChildOrbitAngle);
+        drawSimpleGearCircle(ccx, ccy, rFifthChild, fifthChildRollAngle);
+      }
+    }
     ctx.restore();
   }
 
@@ -751,6 +818,24 @@
     el.textContent = `${slider.value}%`;
   }
 
+  function syncGearSpeedReadouts() {
+    const mainEl = document.getElementById('landing-gear-main-speed-readout');
+    const mainSlider = document.getElementById('landing-gear-main-speed');
+    const fifthEl = document.getElementById('landing-gear-fifth-speed-readout');
+    const fifthSlider = document.getElementById('landing-gear-fifth-speed');
+    if (mainEl && mainSlider) {
+      mainEl.textContent = `${mainSlider.value} min`;
+    }
+    if (fifthEl && fifthSlider) {
+      fifthEl.textContent = `${fifthSlider.value} min`;
+    }
+    const childEl = document.getElementById('landing-gear-fifth-child-speed-readout');
+    const childSlider = document.getElementById('landing-gear-fifth-child-speed');
+    if (childEl && childSlider) {
+      childEl.textContent = `${childSlider.value} min`;
+    }
+  }
+
   const ringSizeSlider = document.getElementById('landing-ring-size-slider');
   if (ringSizeSlider) {
     ringSizeSlider.addEventListener('input', () => {
@@ -760,6 +845,32 @@
     });
     syncRingSizePctLabel();
   }
+
+  const mainGearSpeedSlider = document.getElementById('landing-gear-main-speed');
+  if (mainGearSpeedSlider) {
+    gearMainOrbitPeriodMinutes = Number(mainGearSpeedSlider.value);
+    mainGearSpeedSlider.addEventListener('input', () => {
+      gearMainOrbitPeriodMinutes = Number(mainGearSpeedSlider.value);
+      syncGearSpeedReadouts();
+    });
+  }
+  const fifthGearSpeedSlider = document.getElementById('landing-gear-fifth-speed');
+  if (fifthGearSpeedSlider) {
+    gearFifthOrbitPeriodMinutes = Number(fifthGearSpeedSlider.value);
+    fifthGearSpeedSlider.addEventListener('input', () => {
+      gearFifthOrbitPeriodMinutes = Number(fifthGearSpeedSlider.value);
+      syncGearSpeedReadouts();
+    });
+  }
+  const fifthChildGearSpeedSlider = document.getElementById('landing-gear-fifth-child-speed');
+  if (fifthChildGearSpeedSlider) {
+    gearFifthChildOrbitPeriodMinutes = Number(fifthChildGearSpeedSlider.value);
+    fifthChildGearSpeedSlider.addEventListener('input', () => {
+      gearFifthChildOrbitPeriodMinutes = Number(fifthChildGearSpeedSlider.value);
+      syncGearSpeedReadouts();
+    });
+  }
+  syncGearSpeedReadouts();
 
   const landingFloat = document.getElementById('landing-slider-float');
   const landingToggle = document.getElementById('landing-controls-toggle');

@@ -215,6 +215,38 @@ body {
   background: var(--bg-color);
 }
 
+.orbs-home-link {
+  position: fixed;
+  z-index: 20;
+  top: max(0.75rem, env(safe-area-inset-top, 0px));
+  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ui-color);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.orbs-home-link:hover {
+  color: var(--ui-hover);
+}
+
+.orbs-home-link:focus-visible {
+  outline: 2px solid var(--ui-hover);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.orbs-home-link .orbs-home-icon {
+  display: block;
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+}
+
 .about-link {
   position: fixed;
   left: max(1rem, env(safe-area-inset-left, 0px));
