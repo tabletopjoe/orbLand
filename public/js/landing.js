@@ -76,6 +76,16 @@
   const TWELFTH_BAND_ORBIT_HOST_K = 1;
   /** Signed minutes per orbit (+ forward, − reverse, 0 stop); #landing-gear-main-speed (default 3). */
   let gearMainOrbitPeriodMinutes = 3;
+  /**
+   * Raw #landing-gear-tonic-child-speed (−5…5). Roll period (s) =
+   * {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|value|/{@link TONIC_CHILD_SLIDER_MAX}.
+   */
+  let gearTonicChildRollSliderValue = 3;
+  /**
+   * Signed slider position for #landing-gear-tonic-grandchild-speed (±1). Orbit period in seconds is
+   * {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|value| (see {@link tonicGrandchildOrbitPeriodSecondsFromSlider}).
+   */
+  let gearTonicGrandchildOrbitPeriodSeconds = 0.5;
   /** Signed minutes per orbit; #landing-gear-fifth-speed (default 3). */
   let gearFifthOrbitPeriodMinutes = 3;
   /** Signed minutes per orbit; #landing-gear-fifth-child-speed (default 1). */
@@ -84,10 +94,10 @@
   let gearTwelfthOrbitPeriodMinutes = 3;
   /** Extra arc length along the track from mouse activity (px/s); added while pointer recently moved. */
   const GEAR_SPEED_PX_PER_SEC = 15;
-  /** Multiply grandchild orbit angular speed vs the main gear path (same linear ds). */
-  const GRANDCHILD_ORBIT_SPEED_MULT = 8;
   /** Window after mousemove during which {@link GEAR_SPEED_PX_PER_SEC} is applied on top of base orbit. */
   const GEAR_MOUSE_IDLE_MS = 120;
+  /** Set true to re-enable tonic track boost while the pointer moves. */
+  const GEAR_MOUSE_SPEED_BOOST_ENABLED = false;
   /** Child gear at parent spoke tip: radius relative to parent gear radius. */
   const CHILD_GEAR_RADIUS_SCALE = 0.75;
 
@@ -100,6 +110,40 @@
     if (periodMinutes === 0 || !Number.isFinite(periodMinutes)) return 0;
     const absMin = Math.abs(periodMinutes);
     return (Math.sign(periodMinutes) * (2 * Math.PI)) / (absMin * 60);
+  }
+
+  /** Slider magnitude 1 → this many seconds per orbit at full throw (slowest in range). */
+  const TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC = 15;
+
+  /** Orbit period (s) from signed slider; 0 → stop. */
+  function tonicGrandchildOrbitPeriodSecondsFromSlider(sliderSigned) {
+    const a = Math.abs(sliderSigned);
+    if (a === 0 || !Number.isFinite(sliderSigned)) return 0;
+    return TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC * a;
+  }
+
+  /** rad/s for tonic grandchild from signed slider (period = {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|slider|). */
+  function signedRadPerSecFromTonicGrandchildSlider(sliderSigned) {
+    const T = tonicGrandchildOrbitPeriodSecondsFromSlider(sliderSigned);
+    if (T === 0) return 0;
+    return (Math.sign(sliderSigned) * (2 * Math.PI)) / T;
+  }
+
+  /** Tonic child speed slider max magnitude (matches HTML range). */
+  const TONIC_CHILD_SLIDER_MAX = 5;
+
+  /** Roll period (s) from signed slider; 0 → stop. Same slowest scale as grandchild at full throw. */
+  function tonicChildRollPeriodSecondsFromSlider(sliderSigned) {
+    const a = Math.abs(sliderSigned);
+    if (a === 0 || !Number.isFinite(sliderSigned)) return 0;
+    return TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC * (a / TONIC_CHILD_SLIDER_MAX);
+  }
+
+  /** rad/s for tonic child spoke gear roll from signed slider. */
+  function signedRadPerSecFromTonicChildRollSlider(sliderSigned) {
+    const T = tonicChildRollPeriodSecondsFromSlider(sliderSigned);
+    if (T === 0) return 0;
+    return (Math.sign(sliderSigned) * (2 * Math.PI)) / T;
   }
 
   /**
@@ -153,6 +197,10 @@
   let gearRollAngle = 0;
   /** Grandchild gear center on exterior orbit around child gear (world angle). */
   let orbitGrandchildAngle = -Math.PI / 2;
+  /** Roll for tonic spoke child gear (rad). */
+  let tonicChildRollAngle = 0;
+  /** Roll for tonic grandchild (rad). */
+  let tonicGrandchildRollAngle = 0;
   /** Small gear: orbit angle around the fifth-band host circle (world angle). */
   let fifthOrbitGearAngle = -Math.PI / 2;
   /** Rolling angle for the small fifth-orbit gear (rad). */
@@ -548,9 +596,13 @@
     ctx.lineTo(s1, 0);
     ctx.stroke();
 
+    ctx.save();
+    ctx.translate(s1, 0);
+    ctx.rotate(tonicChildRollAngle);
     ctx.beginPath();
-    ctx.arc(s1, 0, rC, 0, Math.PI * 2);
+    ctx.arc(0, 0, rC, 0, Math.PI * 2);
     ctx.stroke();
+    ctx.restore();
 
     ctx.restore();
 
@@ -561,7 +613,7 @@
     const gCx = childCx + trackGrandchild * Math.cos(orbitGrandchildAngle);
     const gCy = childCy + trackGrandchild * Math.sin(orbitGrandchildAngle);
     drawGearParentLink(childCx, childCy, gCx, gCy);
-    strokeCircleOnly(gCx, gCy, rG);
+    drawSimpleGearCircle(gCx, gCy, rG, tonicGrandchildRollAngle);
   }
 
   function ensureCanvasBackingStore(cssW, cssH) {
@@ -574,6 +626,7 @@
   }
 
   function bumpMouseForGear() {
+    if (!GEAR_MOUSE_SPEED_BOOST_ENABLED) return;
     lastMouseMoveTime = performance.now();
   }
 
@@ -601,7 +654,11 @@
 
     const gearTrackRadPerSec = signedRadPerSecFromPeriodMinutes(gearMainOrbitPeriodMinutes);
     let ds = trackR * gearTrackRadPerSec * dt;
-    if (lastMouseMoveTime > 0 && t - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS) {
+    if (
+      GEAR_MOUSE_SPEED_BOOST_ENABLED &&
+      lastMouseMoveTime > 0 &&
+      t - lastMouseMoveTime < GEAR_MOUSE_IDLE_MS
+    ) {
       ds += GEAR_SPEED_PX_PER_SEC * dt;
     }
 
@@ -609,8 +666,14 @@
       gearTrackAngle += ds / trackR;
       gearRollAngle += ds / rGear;
     }
-    if (rGear > 0 && trackGrandchild > 0) {
-      orbitGrandchildAngle += (ds * GRANDCHILD_ORBIT_SPEED_MULT) / trackGrandchild;
+    if (rGear > 0 && rC > 0) {
+      const ωChild = signedRadPerSecFromTonicChildRollSlider(gearTonicChildRollSliderValue);
+      tonicChildRollAngle += ωChild * dt;
+    }
+    if (rGear > 0 && trackGrandchild > 0 && rG > 0) {
+      const ωG = signedRadPerSecFromTonicGrandchildSlider(gearTonicGrandchildOrbitPeriodSeconds);
+      orbitGrandchildAngle += ωG * dt;
+      tonicGrandchildRollAngle += (trackGrandchild / rG) * ωG * dt;
     }
 
     const kHost = FIFTH_ORBIT_HOST_CIRCLE_K;
@@ -884,6 +947,24 @@
     return `${v < 0 ? '−' : ''}${abs} min`;
   }
 
+  /** Readout: effective orbit period = {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|slider|. */
+  function formatTonicGrandchildOrbitReadout(periodStr) {
+    const v = Number(periodStr);
+    if (v === 0) return '0 — stop';
+    const T = TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC * Math.abs(v);
+    const rounded = Math.round(T * 100) / 100;
+    return `${v < 0 ? '−' : ''}${rounded} s`;
+  }
+
+  /** Readout: roll period = {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|slider|/{@link TONIC_CHILD_SLIDER_MAX}. */
+  function formatTonicChildRollReadout(sliderStr) {
+    const v = Number(sliderStr);
+    if (v === 0) return '0 — stop';
+    const T = tonicChildRollPeriodSecondsFromSlider(v);
+    const rounded = Math.round(T * 100) / 100;
+    return `${v < 0 ? '−' : ''}${rounded} s`;
+  }
+
   function syncGearSpeedReadouts() {
     const mainEl = document.getElementById('landing-gear-main-speed-readout');
     const mainSlider = document.getElementById('landing-gear-main-speed');
@@ -905,6 +986,16 @@
     if (twelfthEl && twelfthSlider) {
       twelfthEl.textContent = formatGearPeriodReadout(twelfthSlider.value);
     }
+    const tonicChildEl = document.getElementById('landing-gear-tonic-child-speed-readout');
+    const tonicChildSlider = document.getElementById('landing-gear-tonic-child-speed');
+    if (tonicChildEl && tonicChildSlider) {
+      tonicChildEl.textContent = formatTonicChildRollReadout(tonicChildSlider.value);
+    }
+    const tonicGrandchildEl = document.getElementById('landing-gear-tonic-grandchild-speed-readout');
+    const tonicGrandchildSlider = document.getElementById('landing-gear-tonic-grandchild-speed');
+    if (tonicGrandchildEl && tonicGrandchildSlider) {
+      tonicGrandchildEl.textContent = formatTonicGrandchildOrbitReadout(tonicGrandchildSlider.value);
+    }
   }
 
   const ringSizeSlider = document.getElementById('landing-ring-size-slider');
@@ -922,6 +1013,22 @@
     gearMainOrbitPeriodMinutes = Number(mainGearSpeedSlider.value);
     mainGearSpeedSlider.addEventListener('input', () => {
       gearMainOrbitPeriodMinutes = Number(mainGearSpeedSlider.value);
+      syncGearSpeedReadouts();
+    });
+  }
+  const tonicChildGearSpeedSlider = document.getElementById('landing-gear-tonic-child-speed');
+  if (tonicChildGearSpeedSlider) {
+    gearTonicChildRollSliderValue = Number(tonicChildGearSpeedSlider.value);
+    tonicChildGearSpeedSlider.addEventListener('input', () => {
+      gearTonicChildRollSliderValue = Number(tonicChildGearSpeedSlider.value);
+      syncGearSpeedReadouts();
+    });
+  }
+  const tonicGrandchildGearSpeedSlider = document.getElementById('landing-gear-tonic-grandchild-speed');
+  if (tonicGrandchildGearSpeedSlider) {
+    gearTonicGrandchildOrbitPeriodSeconds = Number(tonicGrandchildGearSpeedSlider.value);
+    tonicGrandchildGearSpeedSlider.addEventListener('input', () => {
+      gearTonicGrandchildOrbitPeriodSeconds = Number(tonicGrandchildGearSpeedSlider.value);
       syncGearSpeedReadouts();
     });
   }
