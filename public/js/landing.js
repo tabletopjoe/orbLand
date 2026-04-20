@@ -77,8 +77,8 @@
   /** Signed minutes per orbit (+ forward, − reverse, 0 stop); #landing-gear-main-speed (default 3). */
   let gearMainOrbitPeriodMinutes = 3;
   /**
-   * Raw #landing-gear-tonic-child-speed (−5…5). Roll period (s) =
-   * {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|value|/{@link TONIC_CHILD_SLIDER_MAX}.
+   * Raw #landing-gear-tonic-child-speed (−5…5). Drives **spoke** rotation rate (parent→child segment), added to
+   * track roll. Period = {@link TONIC_SPOKE_MAX_PERIOD_SEC}×|value|/{@link TONIC_CHILD_SLIDER_MAX}.
    */
   let gearTonicChildRollSliderValue = 3;
   /**
@@ -132,16 +132,23 @@
   /** Tonic child speed slider max magnitude (matches HTML range). */
   const TONIC_CHILD_SLIDER_MAX = 5;
 
-  /** Roll period (s) from signed slider; 0 → stop. Same slowest scale as grandchild at full throw. */
-  function tonicChildRollPeriodSecondsFromSlider(sliderSigned) {
+  /** At |slider| = {@link TONIC_CHILD_SLIDER_MAX}, tonic spoke rotation period (3 min). */
+  const TONIC_SPOKE_MAX_PERIOD_SEC = 3 * 60;
+
+  /** Spoke rotation period (s) from signed slider; 0 → stop. */
+  function tonicSpokePeriodSecondsFromSlider(sliderSigned) {
     const a = Math.abs(sliderSigned);
     if (a === 0 || !Number.isFinite(sliderSigned)) return 0;
-    return TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC * (a / TONIC_CHILD_SLIDER_MAX);
+    return TONIC_SPOKE_MAX_PERIOD_SEC * (a / TONIC_CHILD_SLIDER_MAX);
   }
 
-  /** rad/s for tonic child spoke gear roll from signed slider. */
-  function signedRadPerSecFromTonicChildRollSlider(sliderSigned) {
-    const T = tonicChildRollPeriodSecondsFromSlider(sliderSigned);
+  /**
+   * rad/s for tonic parent→child **spoke** from this slider only (additive to {@link gearRollAngle}).
+   * Visual rotation uses `gearRollAngle + tonicSpokeOffsetAngle`. While the main tonic orbits, no-slip rolling
+   * advances `gearRollAngle` at ~(trackR/rGear)×orbit rate, which usually dominates unless Tonic gear is 0 min.
+   */
+  function signedRadPerSecFromTonicSpokeSlider(sliderSigned) {
+    const T = tonicSpokePeriodSecondsFromSlider(sliderSigned);
     if (T === 0) return 0;
     return (Math.sign(sliderSigned) * (2 * Math.PI)) / T;
   }
@@ -198,7 +205,8 @@
   /** Grandchild gear center on exterior orbit around child gear (world angle). */
   let orbitGrandchildAngle = -Math.PI / 2;
   /** Roll for tonic spoke child gear (rad). */
-  let tonicChildRollAngle = 0;
+  /** Extra rotation (rad) of tonic parent+spoke+child from #landing-gear-tonic-child-speed (additive to {@link gearRollAngle}). */
+  let tonicSpokeOffsetAngle = 0;
   /** Roll for tonic grandchild (rad). */
   let tonicGrandchildRollAngle = 0;
   /** Small gear: orbit angle around the fifth-band host circle (world angle). */
@@ -572,8 +580,8 @@
   }
 
   /**
-   * Parent gear → spoke → child (collinear with rollRad). Grandchild orbits **outside** the child:
-   * center on a circle of radius r_child + r_grandchild around the child center.
+   * Parent gear → spoke → child (collinear with `rollRad`). `rollRad` should be track roll + tonic spoke offset.
+   * Grandchild orbits **outside** the child.
    */
   function drawGearCircle(gx, gy, rGear, rollRad) {
     const s1 = gearSpokeLengthCss(rGear);
@@ -598,7 +606,6 @@
 
     ctx.save();
     ctx.translate(s1, 0);
-    ctx.rotate(tonicChildRollAngle);
     ctx.beginPath();
     ctx.arc(0, 0, rC, 0, Math.PI * 2);
     ctx.stroke();
@@ -667,8 +674,8 @@
       gearRollAngle += ds / rGear;
     }
     if (rGear > 0 && rC > 0) {
-      const ωChild = signedRadPerSecFromTonicChildRollSlider(gearTonicChildRollSliderValue);
-      tonicChildRollAngle += ωChild * dt;
+      const ωSpoke = signedRadPerSecFromTonicSpokeSlider(gearTonicChildRollSliderValue);
+      tonicSpokeOffsetAngle += ωSpoke * dt;
     }
     if (rGear > 0 && trackGrandchild > 0 && rG > 0) {
       const ωG = signedRadPerSecFromTonicGrandchildSlider(gearTonicGrandchildOrbitPeriodSeconds);
@@ -838,9 +845,9 @@
       const gx = cx[innerK] + trackR * Math.cos(gearTrackAngle);
       const gy = cy + trackR * Math.sin(gearTrackAngle);
       drawGearParentLink(cx[innerK], cy, gx, gy);
-      drawGearCircle(gx, gy, rGear, gearRollAngle);
+      drawGearCircle(gx, gy, rGear, gearRollAngle + tonicSpokeOffsetAngle);
     } else {
-      drawGearCircle(cx[innerK], cy, rGear, gearRollAngle);
+      drawGearCircle(cx[innerK], cy, rGear, gearRollAngle + tonicSpokeOffsetAngle);
     }
 
     const kHost = FIFTH_ORBIT_HOST_CIRCLE_K;
@@ -956,13 +963,19 @@
     return `${v < 0 ? '−' : ''}${rounded} s`;
   }
 
-  /** Readout: roll period = {@link TONIC_GRANDCHILD_SLIDER_TO_PERIOD_SEC}×|slider|/{@link TONIC_CHILD_SLIDER_MAX}. */
-  function formatTonicChildRollReadout(sliderStr) {
+  /** Readout: spoke rotation period = {@link TONIC_SPOKE_MAX_PERIOD_SEC}×|slider|/{@link TONIC_CHILD_SLIDER_MAX}. */
+  function formatTonicSpokeReadout(sliderStr) {
     const v = Number(sliderStr);
     if (v === 0) return '0 — stop';
-    const T = tonicChildRollPeriodSecondsFromSlider(v);
+    const T = tonicSpokePeriodSecondsFromSlider(v);
+    const sign = v < 0 ? '−' : '';
+    if (T >= 60) {
+      const min = T / 60;
+      const rounded = Math.round(min * 100) / 100;
+      return `${sign}${rounded} min`;
+    }
     const rounded = Math.round(T * 100) / 100;
-    return `${v < 0 ? '−' : ''}${rounded} s`;
+    return `${sign}${rounded} s`;
   }
 
   function syncGearSpeedReadouts() {
@@ -989,7 +1002,13 @@
     const tonicChildEl = document.getElementById('landing-gear-tonic-child-speed-readout');
     const tonicChildSlider = document.getElementById('landing-gear-tonic-child-speed');
     if (tonicChildEl && tonicChildSlider) {
-      tonicChildEl.textContent = formatTonicChildRollReadout(tonicChildSlider.value);
+      tonicChildEl.textContent = formatTonicSpokeReadout(tonicChildSlider.value);
+      if (mainSlider && Number(mainSlider.value) !== 0) {
+        tonicChildEl.title =
+          'Spoke-only period (additive ω). The main gear also rolls on the track while it orbits, which usually looks much faster. Set Tonic gear to 0 min to freeze that roll and match this readout for one full rotation.';
+      } else {
+        tonicChildEl.removeAttribute('title');
+      }
     }
     const tonicGrandchildEl = document.getElementById('landing-gear-tonic-grandchild-speed-readout');
     const tonicGrandchildSlider = document.getElementById('landing-gear-tonic-grandchild-speed');
