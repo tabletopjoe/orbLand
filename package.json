@@ -1,7 +1,7 @@
 {
   "name": "orbland",
   "version": "0.1.0",
-  "description": "Interactive 2D solar system simulator",
+  "description": "orbLand — hub-style personal site: chromatic landing and spoke routes to tools and references (Orbs, About overlay); resume at /about.",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

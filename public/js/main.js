@@ -25,7 +25,7 @@ const PLANET_COLOR_VARS = [
   '--planet-neptune-color',
   '--planet-pluto-color'
 ];
-// revealLevel: 0=Mercury,Venus | 1=Earth | 2=moon | 3=Mars | 4=Jupiter+moons | 5–8=Saturn..Pluto
+// revealLevel: 0=Mercury,Venus | 1=Earth | 2=moon | 3=Mars | 4=Jupiter+moons | 5–8=Saturn..Pluto | 9=stars | 10=trails
 const planets = [
   { radius: 6, orbitRadius: 44, orbitSpeed: 0.016, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0 },
   { radius: 8, orbitRadius: 52, orbitSpeed: 0.012, ellipticity: 0, orbitTilt: 0, orbitAngle: Math.random() * Math.PI * 2, trailEnabled: true, trail: [], trailWidth: 2, revealLevel: 0 },
@@ -86,7 +86,12 @@ function snapshotCanvasColors() {
 let paused = false;
 let speedMultiplier = 1;
 let revealLevel = 0;
-const MAX_REVEAL_LEVEL = 8;
+/** Last index where a new orb appears (Pluto). 9 = stars slider, 10 = trails slider; no further steps. */
+const ORBS_MAX_REVEAL_LEVEL = 8;
+/** Post-orbs reveal: stars slider position (% of 0–100 range). */
+const REVEAL_STARS_SLIDER_PCT = 33;
+/** Post-orbs reveal: trails slider position (% of 0–100 range). */
+const REVEAL_TRAILS_SLIDER_PCT = 88;
 let orbitRadiusScale = 1;
 /** Visual scale for sun/planets/moons vs CSS breakpoint (matches style.css max-width: 640px). */
 let solarViewScale = 1;
@@ -608,8 +613,40 @@ canvas.addEventListener('mousemove', (e) => {
 updateUiColorsForBg(Number(document.getElementById('bg-slider').value));
 syncAboutLinkVisibility();
 
+function applyRevealStarsStep() {
+  const el = document.getElementById('stars-slider');
+  if (el) {
+    el.value = String(REVEAL_STARS_SLIDER_PCT);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    syncAboutLinkVisibility();
+  }
+}
+
+function applyRevealTrailsStep() {
+  const el = document.getElementById('trails-slider');
+  if (el) {
+    el.value = String(REVEAL_TRAILS_SLIDER_PCT);
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    syncTrailLengthFromSlider();
+  }
+}
+
 function incrementReveal() {
-  if (revealLevel < MAX_REVEAL_LEVEL) revealLevel++;
+  if (revealLevel < ORBS_MAX_REVEAL_LEVEL) {
+    revealLevel++;
+    return;
+  }
+  if (revealLevel === ORBS_MAX_REVEAL_LEVEL) {
+    revealLevel++;
+    applyRevealStarsStep();
+    return;
+  }
+  if (revealLevel === ORBS_MAX_REVEAL_LEVEL + 1) {
+    revealLevel++;
+    applyRevealTrailsStep();
+  }
 }
 
 function syncLinkCrescentHeights() {

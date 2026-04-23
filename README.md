@@ -1,6 +1,15 @@
 # orbLand
 
-Minimal black canvas at `/` (centered circle, ~50% area). **Orbs** (solar system + link lists) lives at `/orbs`; **About** at `/about`. Work in progress.
+**orbLand** is a personal web dev / resume site organized as a **hub and spokes**: the **landing** page at `/` is the hub—a chromatic ring canvas with navigation that branches out like wheel spokes to other areas.
+
+**First spokes**
+
+- **About** — opens in-canvas copy on the landing page (toggle via the nav).
+- **Orbs** — interactive solar system, link panels, and controls at [`/orbs`](http://localhost:3000/orbs).
+
+More project spokes will link from the landing as they are added.
+
+The traditional **resume** page (print-friendly) remains at [`/about`](http://localhost:3000/about).
 
 ## Getting Started
 
@@ -22,40 +31,40 @@ Minimal black canvas at `/` (centered circle, ~50% area). **Orbs** (solar system
    npm start
    ```
 
-3. Open [http://localhost:3000](http://localhost:3000) for the landing canvas, or [http://localhost:3000/orbs](http://localhost:3000/orbs) for the interactive solar system and link panels.
+3. Open [http://localhost:3000](http://localhost:3000) for the landing hub, or [http://localhost:3000/orbs](http://localhost:3000/orbs) for Orbs.
 
 On `/orbs`, you should see a sun at the center with planets orbiting and moons where revealed.
 
-## Controls
+## Orbs controls
 
-35px icons along the right edge of the canvas, revealed after clicking control toggle in upper-right corner. 
+Icons along the right edge of the canvas (use the control toggle in the upper-right to show them).
 
-- **Planet speed** – adjust orbit speed of the planet
-- **Moon speed** – adjust orbit speed of the moon
-- **Trails** – orbit trail length (0 = off; higher = longer trails, more work for the GPU/CPU)
-- **Orbit radius** – adjust planet and moon orbit radii
+- **Planet speed** — orbit speed of the planet  
+- **Moon speed** — orbit speed of the moon  
+- **Trails** — orbit trail length (0 = off; higher = longer trails, more GPU/CPU work)  
+- **Orbit radius** — planet and moon orbit radii  
 
 Click an icon to open its popover; click outside to close.
 
-## Project Structure
+## Project structure
 
 ```
 orbLand/
-├── server.js       # Express server
+├── server.js           # Express server
 ├── public/
-│   ├── index.html      # Landing (canvas)
-│   ├── js/landing.js   # Landing canvas draw
-│   ├── orbs.html       # Solar system + link categories
-│   ├── about.html
-│   ├── css/landing.css # Landing page
+│   ├── index.html      # Landing hub (canvas)
+│   ├── js/landing.js   # Landing canvas, gears, overlays
+│   ├── orbs.html
+│   ├── about.html      # Resume (also linked from Orbs)
+│   ├── css/landing.css
 │   ├── css/style.css   # Orbs: theme vars, link panels, sliders
 │   └── js/main.js      # Orbs simulation and UI
 └── package.json
 ```
 
-## Theme
+## Theme (Orbs)
 
-Colors are defined via CSS custom properties in `style.css`:
+Colors use CSS custom properties in `style.css`:
 
 - `--bg-color`
 - `--sun-color`
