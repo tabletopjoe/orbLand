@@ -1,10 +1,10 @@
 :root {
   --landing-ui: rgba(255, 255, 255, 0.7);
   --landing-ui-hover: rgba(255, 255, 255, 0.95);
-  --landing-thumb-size: 24px;
+  --landing-thumb-size: 14px;
   /** JS lowers this as needed so every landing control fits within the canvas height. */
-  --landing-slider-track: 108px;
-  --landing-control-track: rgba(255, 255, 255, 0.14);
+  --landing-slider-track: 66px;
+  --landing-control-track: rgba(255, 255, 255, 0.2);
 }
 
 .visually-hidden {
@@ -92,11 +92,11 @@ body {
   border-radius: 2px;
 }
 
-/* Right-edge: moon toggle on top, size slider revealed beneath (same vertical axis) */
+/* Right-edge controls match the Orbs page control system. */
 .landing-slider-float {
   --landing-slider-top: max(1rem, env(safe-area-inset-top, 0px));
+  --landing-slider-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
   --landing-slider-right: max(1rem, env(safe-area-inset-right, 0px));
-  --landing-slider-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
   position: fixed;
   top: var(--landing-slider-top);
   right: var(--landing-slider-right);
@@ -104,10 +104,11 @@ body {
   z-index: 10;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: flex-start;
   gap: 0.5rem;
   pointer-events: none;
+  min-height: 0;
   box-sizing: border-box;
   overflow: visible;
 }
@@ -129,45 +130,72 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  min-height: 44px;
+  width: 20.328px;
+  height: 41.382px;
+  min-height: 41.382px;
   padding: 0;
   border: none;
-  border-radius: 50%;
+  border-radius: 999px;
   background: transparent;
-  color: inherit;
+  color: var(--landing-ui);
   cursor: pointer;
   flex-shrink: 0;
+  overflow: visible;
 }
 
-.landing-controls-toggle:hover .landing-moon-icon {
-  filter: brightness(1.12);
+.landing-controls-toggle:hover {
+  color: var(--landing-ui-hover);
 }
 
 .landing-controls-toggle:focus-visible {
   outline: 2px solid var(--landing-ui-hover);
   outline-offset: 3px;
-  border-radius: 50%;
+  border-radius: 999px;
 }
 
-.landing-moon-icon {
+.landing-controls-visibility-icon-slot {
+  position: relative;
   display: block;
-  overflow: visible;
+  width: 20.328px;
+  height: 41.382px;
+  flex-shrink: 0;
+}
+
+.landing-controls-visibility-icon-slot .landing-controls-visibility-icon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  width: 20.328px;
+  height: 41.382px;
+}
+
+.landing-slider-float:not(.landing-slider-float--controls-hidden) .landing-controls-visibility-icon--pill {
+  display: none;
+}
+
+.landing-slider-float--controls-hidden .landing-controls-visibility-icon--full {
+  display: none;
 }
 
 .landing-slider-controls {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
-  flex-shrink: 0;
-  overflow: visible;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .landing-slider-cell {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.25rem;
 }
 
@@ -175,7 +203,7 @@ body {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   gap: 0.45rem;
 }
 
@@ -189,8 +217,8 @@ body {
 }
 
 .landing-spectrum-swatch {
-  width: 14px;
-  height: 14px;
+  width: var(--landing-thumb-size);
+  height: var(--landing-thumb-size);
   padding: 0;
   border: 2px solid rgba(255, 255, 255, 0.25);
   border-radius: 50%;
@@ -229,22 +257,21 @@ body {
 }
 
 .landing-slider-cell label {
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 0.65rem;
-  font-weight: 500;
   color: var(--landing-ui);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  text-align: center;
+  letter-spacing: 0.02em;
+  text-align: right;
 }
 
 .landing-ring-size-pct {
-  font-family: 'Poppins', system-ui, sans-serif;
+  font-family: system-ui, sans-serif;
   font-size: 0.72rem;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   color: var(--landing-ui-hover);
-  text-align: center;
+  text-align: right;
   line-height: 1.2;
   min-width: 2.75rem;
 }
@@ -277,7 +304,7 @@ body {
   -webkit-appearance: none;
   width: var(--landing-thumb-size);
   height: var(--landing-thumb-size);
-  background: var(--landing-ui-hover);
+  background: var(--landing-ui);
   border-radius: 50%;
   cursor: pointer;
 }
@@ -285,7 +312,7 @@ body {
 .landing-vertical-slider::-moz-range-thumb {
   width: var(--landing-thumb-size);
   height: var(--landing-thumb-size);
-  background: var(--landing-ui-hover);
+  background: var(--landing-ui);
   border: none;
   border-radius: 50%;
   cursor: pointer;
@@ -297,7 +324,7 @@ body {
   border-radius: 4px;
 }
 
-@container (max-height: 107px) {
+@container (max-height: 65px) {
   .landing-slider-wrap .landing-vertical-slider {
     transform: rotate(-90deg) scale(min(1, calc(100cqh / var(--landing-slider-track))));
   }
@@ -323,7 +350,7 @@ body {
 
 @media (max-width: 640px) {
   :root {
-    --landing-thumb-size: 27px;
+    --landing-thumb-size: 18px;
   }
 
   .landing-slider-float {

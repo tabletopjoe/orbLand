@@ -17,7 +17,7 @@
   /** Let the first layout/render settle before the automatic page-load strum. */
   const INITIAL_LOAD_STRUM_DELAY_MS = 120;
   const LANDING_SLIDER_MIN_TRACK_PX = 0;
-  const LANDING_SLIDER_MAX_TRACK_PX = 108;
+  const LANDING_SLIDER_MAX_TRACK_PX = 66;
   /** Shift tonic label block inward from the disk’s left edge (CSS px). */
   const TONIC_LABEL_LEFT_INSET_PX = 88;
   /** null = default view; otherwise which tonic overlay is shown (mutually exclusive). */
