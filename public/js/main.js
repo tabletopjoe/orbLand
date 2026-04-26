@@ -437,8 +437,6 @@ document.getElementById('bg-slider').addEventListener('input', (e) => {
   updateUiColorsForBg(Number(e.target.value));
 });
 
-document.getElementById('stars-slider').addEventListener('input', syncAboutLinkVisibility);
-
 document.getElementById('controls-visibility-btn').addEventListener('click', () => {
   const float = document.getElementById('slider-float');
   const btn = document.getElementById('controls-visibility-btn');
@@ -583,22 +581,12 @@ function canvasCoordsFromEvent(e) {
   };
 }
 
-function syncAboutLinkVisibility() {
-  const el = document.getElementById('about-link');
-  if (!el) return;
-  const starsAtMax = Number(document.getElementById('stars-slider').value) === 100;
-  const fromAboutReturn = sessionStorage.getItem('orbShowAboutLink') === '1';
-  el.hidden = !((starsAtMax && paused) || fromAboutReturn);
-}
-
 document.addEventListener('click', (e) => {
   if (e.target.closest('.slider-float')) return;
-  if (e.target.closest('.about-link')) return;
   if (e.target === canvas || e.target.closest('#canvas')) {
     const { x, y } = canvasCoordsFromEvent(e);
     if (isClickOnSun(x, y)) {
       paused = !paused;
-      syncAboutLinkVisibility();
       return;
     }
   }
@@ -611,15 +599,12 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 updateUiColorsForBg(Number(document.getElementById('bg-slider').value));
-syncAboutLinkVisibility();
 
 function applyRevealStarsStep() {
   const el = document.getElementById('stars-slider');
   if (el) {
     el.value = String(REVEAL_STARS_SLIDER_PCT);
     el.dispatchEvent(new Event('input', { bubbles: true }));
-  } else {
-    syncAboutLinkVisibility();
   }
 }
 

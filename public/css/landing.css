@@ -2,7 +2,7 @@
   --landing-ui: rgba(255, 255, 255, 0.7);
   --landing-ui-hover: rgba(255, 255, 255, 0.95);
   --landing-thumb-size: 24px;
-  /** Vertical track length (after −90° rotation); was 72px, +50%. */
+  /** JS lowers this as needed so every landing control fits within the canvas height. */
   --landing-slider-track: 108px;
   --landing-control-track: rgba(255, 255, 255, 0.14);
 }
@@ -73,6 +73,10 @@ body {
   transition:
     transform 0.2s ease,
     color 0.2s ease;
+}
+
+.landing-link[hidden] {
+  display: none;
 }
 
 .landing-link:hover,
@@ -295,7 +299,7 @@ body {
 
 @container (max-height: 107px) {
   .landing-slider-wrap .landing-vertical-slider {
-    transform: rotate(-90deg) scale(min(1, calc(100cqh / 108px)));
+    transform: rotate(-90deg) scale(min(1, calc(100cqh / var(--landing-slider-track))));
   }
 }
 

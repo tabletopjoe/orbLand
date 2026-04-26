@@ -218,13 +218,13 @@ body {
 .orbs-home-link {
   position: fixed;
   z-index: 20;
-  top: max(0.75rem, env(safe-area-inset-top, 0px));
-  left: max(0.75rem, env(safe-area-inset-left, 0px));
+  top: max(0.1875rem, env(safe-area-inset-top, 0px));
+  left: max(0.1875rem, env(safe-area-inset-left, 0px));
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 88px;
-  height: 88px;
+  width: 56px;
+  height: 56px;
   color: var(--ui-color);
   text-decoration: none;
   transition: color 0.15s ease;
@@ -245,30 +245,6 @@ body {
   width: 56px;
   height: 56px;
   overflow: visible;
-}
-
-.about-link {
-  position: fixed;
-  left: max(1rem, env(safe-area-inset-left, 0px));
-  bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
-  z-index: 10;
-  font-family: 'Poppins', system-ui, sans-serif;
-  font-size: 0.875rem;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ui-color);
-  text-decoration: none;
-}
-
-.about-link:hover {
-  color: var(--ui-hover);
-}
-
-.about-link:focus-visible {
-  outline: 2px solid var(--ui-hover);
-  outline-offset: 3px;
-  border-radius: 3px;
 }
 
 .slider-float {
