@@ -620,6 +620,7 @@
 
   /** Stroked gear circle only (no spoke) — fifth-orbit mini gear. */
   function drawSimpleGearCircle(gx, gy, rGear, rollRad) {
+    fillGearBandLens(gx, gy, rGear);
     ctx.save();
     ctx.translate(gx, gy);
     ctx.rotate(rollRad);
@@ -640,6 +641,11 @@
     const rC = rGear * CHILD_GEAR_RADIUS_SCALE;
     const rG = rC * CHILD_GEAR_RADIUS_SCALE;
     const trackGrandchild = rC + rG;
+    const childCx = gx + s1 * Math.cos(rollRad);
+    const childCy = gy + s1 * Math.sin(rollRad);
+
+    fillGearBandLens(gx, gy, rGear);
+    fillGearBandLens(childCx, childCy, rC);
 
     ctx.save();
     ctx.translate(gx, gy);
@@ -667,8 +673,6 @@
 
     if (trackGrandchild <= 0) return;
 
-    const childCx = gx + s1 * Math.cos(rollRad);
-    const childCy = gy + s1 * Math.sin(rollRad);
     const gCx = childCx + trackGrandchild * Math.cos(orbitGrandchildAngle);
     const gCy = childCy + trackGrandchild * Math.sin(orbitGrandchildAngle);
     drawGearParentLink(childCx, childCy, gCx, gCy);
@@ -776,6 +780,19 @@
     ctx.arc(c1x, c1y, r1, 0, Math.PI * 2);
     ctx.fillStyle = color;
     ctx.fill('evenodd');
+  }
+
+  function fillGearBandLens(gx, gy, rGear) {
+    if (!chromaticGeom || rGear <= 0) return;
+    const { cx, r, cy } = chromaticGeom;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(gx, gy, rGear, 0, Math.PI * 2);
+    ctx.clip();
+    for (let b = 0; b < BAND_COUNT; b++) {
+      fillBandAnnulus(cx[b], cy, r[b], cx[b + 1], cy, r[b + 1], HOVER_SPECTRUM[spectrumIndexForBand(b)]);
+    }
+    ctx.restore();
   }
 
   function cancelChromaticStrum() {
