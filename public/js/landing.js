@@ -14,6 +14,8 @@
   let ringSizeMultiplier = 1;
   /** CONSULTING / ABOUT: 208% rings, semi-transparent gears, copy inside the tonic disk. */
   const CONSULTING_RING_SLIDER_PCT = 208;
+  /** Let the first layout/render settle before the automatic page-load strum. */
+  const INITIAL_LOAD_STRUM_DELAY_MS = 120;
   /** Shift tonic label block inward from the disk’s left edge (CSS px). */
   const TONIC_LABEL_LEFT_INSET_PX = 88;
   /** null = default view; otherwise which tonic overlay is shown (mutually exclusive). */
@@ -156,12 +158,60 @@
   /**
    * Twelve ring gaps: band 0 = outer (high B♭ side) … band 11 = inner (toward low B♭).
    * Spectrum index 0 = innermost gap (low end of the octave), 11 = outermost gap (high end).
+   * Preset 0: blue → magenta (original). Preset 1: yellow through orange to dark red.
+   * Preset 2: lime through mid greens to deep jungle green.
    */
-  const HOVER_SPECTRUM = Array.from({ length: BAND_COUNT }, (_, i) => {
-    const t = i / (BAND_COUNT - 1);
-    const h = Math.round(215 + t * (308 - 215));
-    return `hsl(${h}, 48%, 46%)`;
-  });
+  const SPECTRUM_SET_COUNT = 3;
+  const SPECTRUM_SET_STORAGE_KEY = 'landingChromaticSpectrum';
+
+  function spectrumSetIndexForTimeOfDay(date = new Date()) {
+    const hour = date.getHours();
+
+    if (hour >= 5 && hour < 13) return 2;
+    if (hour >= 13 && hour < 20) return 0;
+    return 1;
+  }
+
+  function readStoredSpectrumSetIndex() {
+    try {
+      const v = sessionStorage.getItem(SPECTRUM_SET_STORAGE_KEY);
+      const n = Number(v);
+      if (n === 0 || n === 1 || n === 2) return n;
+    } catch {
+      /* ignore */
+    }
+    return spectrumSetIndexForTimeOfDay();
+  }
+
+  function buildHoverSpectrum(presetIndex) {
+    return Array.from({ length: BAND_COUNT }, (_, i) => {
+      const t = i / (BAND_COUNT - 1);
+      if (presetIndex === 1) {
+        const h = Math.round(55 + t * (2 - 55));
+        const s = Math.round(50 + t * 6);
+        const l = Math.round(45 - t * 18);
+        return `hsl(${h}, ${s}%, ${l}%)`;
+      }
+      if (presetIndex === 2) {
+        if (i >= BAND_COUNT - 2) {
+          const u = (i - (BAND_COUNT - 2)) / 1;
+          const h = Math.round(122 + u * 6);
+          const s = Math.round(34 - u * 4);
+          const l = Math.round(34 - u * 6);
+          return `hsl(${h}, ${s}%, ${l}%)`;
+        }
+        const h = Math.round(94 + t * (132 - 94));
+        const s = Math.round(38 + t * 16);
+        const l = Math.round(68 - t * 28);
+        return `hsl(${h}, ${s}%, ${l}%)`;
+      }
+      const h = Math.round(215 + t * (308 - 215));
+      return `hsl(${h}, 48%, 46%)`;
+    });
+  }
+
+  let spectrumSetIndex = readStoredSpectrumSetIndex();
+  let HOVER_SPECTRUM = buildHoverSpectrum(spectrumSetIndex);
 
   /**
    * Ring k (0 = outer largest … 12 = inner smallest): pitch rises outward; inner k=12 = first B♭, outer k=0 = octave B♭.
@@ -1027,6 +1077,34 @@
     syncRingSizePctLabel();
   }
 
+  function syncSpectrumSwatchUi() {
+    document.querySelectorAll('.landing-spectrum-swatch').forEach((btn) => {
+      const raw = btn.getAttribute('data-spectrum');
+      const idx = raw === null ? NaN : Number(raw);
+      const active = idx === spectrumSetIndex;
+      btn.setAttribute('aria-checked', String(active));
+      btn.classList.toggle('landing-spectrum-swatch--active', active);
+    });
+  }
+
+  document.querySelectorAll('.landing-spectrum-swatch').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const idx = Number(btn.getAttribute('data-spectrum'));
+      if (Number.isNaN(idx) || idx < 0 || idx >= SPECTRUM_SET_COUNT) return;
+      if (idx === spectrumSetIndex) return;
+      spectrumSetIndex = idx;
+      HOVER_SPECTRUM = buildHoverSpectrum(idx);
+      try {
+        sessionStorage.setItem(SPECTRUM_SET_STORAGE_KEY, String(idx));
+      } catch {
+        /* ignore */
+      }
+      syncSpectrumSwatchUi();
+      render();
+    });
+  });
+  syncSpectrumSwatchUi();
+
   const mainGearSpeedSlider = document.getElementById('landing-gear-main-speed');
   if (mainGearSpeedSlider) {
     gearMainOrbitPeriodMinutes = Number(mainGearSpeedSlider.value);
@@ -1167,4 +1245,7 @@
   window.cancelChromaticStrum = cancelChromaticStrum;
 
   requestAnimationFrame(landingGearAnimationLoop);
+  window.setTimeout(() => {
+    chromaticStrum();
+  }, INITIAL_LOAD_STRUM_DELAY_MS);
 })();

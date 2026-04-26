@@ -49,19 +49,57 @@
       </svg>
     </button>
     <div class="landing-slider-controls" id="landing-slider-controls">
-      <div class="landing-slider-cell">
+      <div class="landing-slider-cell landing-slider-cell--size">
         <label for="landing-ring-size-slider">Size</label>
-        <div class="landing-slider-wrap">
-          <input
-            type="range"
-            id="landing-ring-size-slider"
-            class="landing-vertical-slider"
-            min="25"
-            max="300"
-            value="100"
-            step="1"
-            aria-label="Overall chromatic ring size"
-          />
+        <div class="landing-size-and-spectrum">
+          <div
+            class="landing-spectrum-swatches"
+            role="radiogroup"
+            aria-label="Chromatic band colors"
+          >
+            <button
+              type="button"
+              class="landing-spectrum-swatch landing-spectrum-swatch--cool"
+              data-spectrum="0"
+              role="radio"
+              aria-checked="true"
+              title="Blue through magenta (default)"
+            >
+              <span class="visually-hidden">Blue through magenta</span>
+            </button>
+            <button
+              type="button"
+              class="landing-spectrum-swatch landing-spectrum-swatch--warm"
+              data-spectrum="1"
+              role="radio"
+              aria-checked="false"
+              title="Yellow through dark red"
+            >
+              <span class="visually-hidden">Yellow through dark red</span>
+            </button>
+            <button
+              type="button"
+              class="landing-spectrum-swatch landing-spectrum-swatch--jungle"
+              data-spectrum="2"
+              role="radio"
+              aria-checked="false"
+              title="Lime through jungle green"
+            >
+              <span class="visually-hidden">Lime through jungle green</span>
+            </button>
+          </div>
+          <div class="landing-slider-wrap">
+            <input
+              type="range"
+              id="landing-ring-size-slider"
+              class="landing-vertical-slider"
+              min="25"
+              max="300"
+              value="100"
+              step="1"
+              aria-label="Overall chromatic ring size"
+            />
+          </div>
         </div>
         <div
           class="landing-ring-size-pct"
