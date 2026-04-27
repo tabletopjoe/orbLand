@@ -82,6 +82,19 @@ body.about-body {
   height: auto;
 }
 
+.project-dev-note {
+  position: fixed;
+  left: max(0.5rem, env(safe-area-inset-left, 0px));
+  bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
+  z-index: 20;
+  margin: 0;
+  max-width: min(22rem, calc(100vw - 1rem));
+  font-size: 0.68rem;
+  font-style: italic;
+  color: var(--muted);
+  pointer-events: none;
+}
+
 a {
   color: inherit;
   text-decoration: none;

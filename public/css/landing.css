@@ -348,6 +348,20 @@ body {
   white-space: nowrap;
 }
 
+.project-dev-note {
+  position: fixed;
+  left: max(0.5rem, env(safe-area-inset-left, 0px));
+  bottom: max(0.45rem, env(safe-area-inset-bottom, 0px));
+  z-index: 5;
+  margin: 0;
+  max-width: min(22rem, calc(100vw - 1rem));
+  font-family: 'Poppins', system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-style: italic;
+  color: var(--landing-ui);
+  pointer-events: none;
+}
+
 @media (max-width: 640px) {
   :root {
     --landing-thumb-size: 18px;
