@@ -16,8 +16,7 @@
   const CONSULTING_RING_SLIDER_PCT = 208;
   /** Let the first layout/render settle before the automatic page-load strum. */
   const INITIAL_LOAD_STRUM_DELAY_MS = 120;
-  const LANDING_SLIDER_MIN_TRACK_PX = 0;
-  const LANDING_SLIDER_MAX_TRACK_PX = 66;
+  const TONIC_OVERLAY_MOBILE_COPY_SCALE = 0.5;
   /** Shift tonic label block inward from the disk’s left edge (CSS px). */
   const TONIC_LABEL_LEFT_INSET_PX = 88;
   /** null = default view; otherwise which tonic overlay is shown (mutually exclusive). */
@@ -543,7 +542,8 @@
     const pad = Math.max(10, rInner * 0.14);
     const maxW = Math.max(40, (rInner - pad) * 2);
     const fontSizeBase = Math.max(9, Math.min(13, rInner / 4.5));
-    const fontSize = fontSizeBase * 3 * (includeContact ? 1 : 0.7) - 3;
+    const copyScale = window.innerWidth <= 640 ? TONIC_OVERLAY_MOBILE_COPY_SCALE : 1;
+    const fontSize = (fontSizeBase * 3 * (includeContact ? 1 : 0.7) - 3) * copyScale;
     ctx.font = `400 ${fontSize}px Poppins, system-ui, sans-serif`;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.textAlign = 'left';
@@ -1012,7 +1012,6 @@
   window.addEventListener('resize', () => {
     cachedCanvasCssW = 0;
     cachedCanvasCssH = 0;
-    syncLandingSliderTrackHeight();
     render();
   });
 
@@ -1021,51 +1020,6 @@
     const slider = document.getElementById('landing-ring-size-slider');
     if (!el || !slider) return;
     el.textContent = `${slider.value}%`;
-  }
-
-  function syncLandingSliderTrackHeight() {
-    const floatEl = document.getElementById('landing-slider-float');
-    const controlsEl = document.getElementById('landing-slider-controls');
-    const toggleEl = document.getElementById('landing-controls-toggle');
-    if (!floatEl || !controlsEl) return;
-
-    const cells = Array.from(controlsEl.querySelectorAll('.landing-slider-cell'));
-    const sliderCount = cells.length;
-    if (sliderCount === 0) return;
-
-    const wasHidden = floatEl.classList.contains('landing-slider-float--controls-hidden');
-    if (wasHidden) {
-      floatEl.classList.remove('landing-slider-float--controls-hidden');
-    }
-
-    const root = document.documentElement;
-    const prevTrack = getComputedStyle(root).getPropertyValue('--landing-slider-track').trim();
-    root.style.setProperty('--landing-slider-track', '0px');
-
-    const floatStyles = getComputedStyle(floatEl);
-    const controlsStyles = getComputedStyle(controlsEl);
-    const floatGap = parseFloat(floatStyles.gap) || 0;
-    const controlsGap = parseFloat(controlsStyles.gap) || 0;
-    const toggleH = toggleEl ? toggleEl.getBoundingClientRect().height : 0;
-    const availableH = Math.max(0, floatEl.getBoundingClientRect().height - toggleH - floatGap);
-    const cellNonTrackH = cells.reduce((sum, cell) => sum + cell.getBoundingClientRect().height, 0);
-    const controlsGapsH = controlsGap * Math.max(0, sliderCount - 1);
-    const maxTrackForFit = Math.floor((availableH - cellNonTrackH - controlsGapsH) / sliderCount);
-    const nextTrack = Number.isFinite(maxTrackForFit)
-      ? Math.max(
-          LANDING_SLIDER_MIN_TRACK_PX,
-          Math.min(LANDING_SLIDER_MAX_TRACK_PX, maxTrackForFit)
-        )
-      : null;
-
-    if (nextTrack === null) {
-      root.style.setProperty('--landing-slider-track', prevTrack || `${LANDING_SLIDER_MIN_TRACK_PX}px`);
-    } else {
-      root.style.setProperty('--landing-slider-track', `${nextTrack}px`);
-    }
-    if (wasHidden) {
-      floatEl.classList.add('landing-slider-float--controls-hidden');
-    }
   }
 
   function formatGearPeriodReadout(periodStr) {
@@ -1228,12 +1182,10 @@
 
   const landingFloat = document.getElementById('landing-slider-float');
   const landingToggle = document.getElementById('landing-controls-toggle');
-  syncLandingSliderTrackHeight();
   if (landingFloat && landingToggle) {
     landingToggle.addEventListener('click', () => {
       chromaticStrum();
       landingFloat.classList.toggle('landing-slider-float--controls-hidden');
-      syncLandingSliderTrackHeight();
       const hidden = landingFloat.classList.contains('landing-slider-float--controls-hidden');
       landingToggle.setAttribute('aria-expanded', String(!hidden));
       landingToggle.setAttribute(

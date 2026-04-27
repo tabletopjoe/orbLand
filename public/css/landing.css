@@ -357,9 +357,42 @@ body {
     --landing-slider-top: max(0.5rem, env(safe-area-inset-top, 0px));
     --landing-slider-right: max(0.5rem, env(safe-area-inset-right, 0px));
     --landing-slider-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+    gap: 0.35rem;
+  }
+
+  .landing-ring-size-pct {
+    display: none;
+  }
+
+  .landing-slider-controls {
+    gap: 0.35rem;
+  }
+
+  .landing-slider-cell {
+    gap: 0.2rem;
+  }
+
+  .landing-slider-wrap {
+    height: min(66px, max(34px, calc((100dvh - 11.5rem) / 11)));
   }
 
   .landing-link-panel {
-    max-width: min(18rem, calc(100vw - 3.25rem));
+    left: max(0.5rem, env(safe-area-inset-left, 0px));
+    top: max(0.5rem, env(safe-area-inset-top, 0px));
+    transform: none;
+    gap: 0.65rem;
+    max-width: min(11rem, calc(100vw - 5.5rem));
+  }
+
+  .landing-link {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    padding: 0.05rem 0;
+  }
+
+  .landing-link:hover,
+  .landing-link.landing-link--consulting-active,
+  .landing-link.landing-link--about-active {
+    transform: scale(1.08);
   }
 }

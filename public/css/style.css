@@ -431,7 +431,7 @@ body {
 
   .link-panel-container {
     left: max(0.5rem, env(safe-area-inset-left, 0px));
-    top: max(0.5rem, env(safe-area-inset-top, 0px));
+    top: max(4rem, calc(env(safe-area-inset-top, 0px) + 3.75rem));
     transform: none;
     max-width: min(11rem, calc(100vw - 5.5rem));
   }
