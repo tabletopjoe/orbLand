@@ -1,15 +1,17 @@
 # orbLand
 
-**orbLand** is a personal web dev / resume site organized as a **hub and spokes**: the **landing** page at `/` is the hub—a chromatic ring canvas with navigation that branches out like wheel spokes to other areas.
+**orbLand** is a personal web dev / resume site.
+The **landing** page at `/` features a rotating-rings design.
 
-**First spokes**
+**First Sections**
 
-- **About** — opens in-canvas copy on the landing page (toggle via the nav).
+- **Consult** — opens in-canvas copy on the landing page (toggle via the nav).
+- **About** — opens in-canvas copy
 - **Orbs** — interactive solar system, link panels, and controls at [`/orbs`](http://localhost:3000/orbs).
 
 More project spokes will link from the landing as they are added.
 
-The traditional **resume** page (print-friendly) remains at [`/about`](http://localhost:3000/about).
+Traditional **resume** page (print-friendly) at [`/about`](http://localhost:3000/about).
 
 ## Getting Started
 
