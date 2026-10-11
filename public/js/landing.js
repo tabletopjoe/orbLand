@@ -23,9 +23,8 @@
   let landingTonicMode = /** @type {null | 'consulting' | 'about'} */ (null);
 
   const CONTACT_EMAIL = 'consult@dianilo.onmicrosoft.com';
-  const CONTACT_MAILTO = `mailto:${CONTACT_EMAIL}`;
   const CONTACT_LABEL = 'CONTACT';
-  /** Envelope + CONTACT row hit area in CSS px (set while drawing consulting copy). */
+  /** Envelope + CONTACT row hit area in CSS px (set while drawing consulting copy); opens the contact form. */
   let contactMailHitRect = null;
   /** Envelope icon only (tooltips). */
   let contactEnvelopeHitRect = null;
@@ -52,7 +51,7 @@
     }
   }
 
-  /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. (CONTACT row is drawn separately with mail link.) */
+  /** Use \\n for line breaks; \\n\\n adds a short blank gap. Or use a template literal (backticks) with real newlines. (CONTACT row is drawn separately and opens the contact form.) */
   const CONSULTING_TONIC_COPY =
     'MICROSOFT 365\n  POWER PLATFORM\n SHAREPOINT\n TEAMS\n\n CUSTOM WEB SOLUTIONS';
 
@@ -958,7 +957,7 @@
         showContactTooltip('Copy Email', e.clientX, e.clientY);
       } else if (pointInRect(x, y, contactEnvelopeHitRect)) {
         canvas.style.cursor = 'pointer';
-        showContactTooltip('Send Email', e.clientX, e.clientY);
+        showContactTooltip('Send a Message', e.clientX, e.clientY);
       } else if (pointInRect(x, y, contactMailHitRect)) {
         canvas.style.cursor = 'pointer';
         hideContactTooltip();
@@ -988,7 +987,8 @@
     }
     if (landingTonicMode === 'consulting' && pointInRect(x, y, contactMailHitRect)) {
       e.preventDefault();
-      window.location.href = CONTACT_MAILTO;
+      hideContactTooltip();
+      window.openContactForm();
       return;
     }
     if (landingTonicMode && !insideChromaticDesign) {

@@ -37,6 +37,24 @@ Traditional **resume** page (print-friendly) at [`/about`](http://localhost:3000
 
 On `/orbs`, you should see a sun at the center with planets orbiting and moons where revealed.
 
+## Contact form
+
+The **CONTACT** row in the Consulting overlay opens a contact/interest form (`public/js/contact.js`). Submissions go to `POST /api/contact` (`lib/contact.js`), which:
+
+1. saves the inquiry to `orbland.contact_submissions` in the shared Neon Postgres database (famList owns `public`; orbLand owns the `orbland` schema), and
+2. emails a notification through [Resend](https://resend.com), with reply-to set to the visitor.
+
+If either step fails, the submission still succeeds as long as the other one worked. Spam protection is a hidden honeypot field, a minimum fill time, and a per-instance rate limit.
+
+| Env var | Purpose |
+| --- | --- |
+| `DATABASE_URL` | Neon connection string (injected by the Vercel Storage integration) |
+| `RESEND_API_KEY` | Enables email notifications |
+| `CONTACT_TO` | Notification recipient (default `consult@dianilo.onmicrosoft.com`) |
+| `CONTACT_FROM` | Sender on a Resend-verified domain, e.g. `orbLand <contact@schlnkr.com>` |
+
+Schema changes live in `db/migrations/*.sql`; apply them with `npm run db:migrate` (tracked in `orbland._migrations`). For local dev, put the env vars in `.env` and run `npm run dev`. With neither `DATABASE_URL` nor `RESEND_API_KEY` set locally, submissions are only logged to the console.
+
 ## Orbs controls
 
 Icons along the right edge of the canvas (use the control toggle in the upper-right to show them).
@@ -52,10 +70,14 @@ Click an icon to open its popover; click outside to close.
 
 ```
 orbLand/
-├── server.js           # Express server
+├── server.js           # Express server (+ POST /api/contact)
+├── lib/contact.js      # Contact form handler (Neon + Resend)
+├── db/migrations/      # SQL for the orbland schema
+├── scripts/db-migrate.js
 ├── public/
 │   ├── index.html      # Landing hub (canvas)
 │   ├── js/landing.js   # Landing canvas, gears, overlays
+│   ├── js/contact.js   # Contact form dialog
 │   ├── orbs.html
 │   ├── about.html      # Resume (also linked from Orbs)
 │   ├── css/landing.css

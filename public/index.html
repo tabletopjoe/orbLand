@@ -245,7 +245,61 @@
     role="tooltip"
     hidden
   ></div>
+  <dialog id="contact-dialog" class="contact-dialog" aria-labelledby="contact-dialog-title">
+    <form id="contact-form" class="contact-form" novalidate>
+      <div class="contact-form-head">
+        <h2 id="contact-dialog-title" class="contact-form-title">Get in touch</h2>
+        <button type="button" class="contact-close" id="contact-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="contact-fields">
+        <label class="contact-field">
+          <span>Name</span>
+          <input type="text" name="name" autocomplete="name" maxlength="100" required>
+          <small class="contact-field-error" data-error-for="name"></small>
+        </label>
+        <label class="contact-field">
+          <span>Email</span>
+          <input type="email" name="email" autocomplete="email" maxlength="254" required>
+          <small class="contact-field-error" data-error-for="email"></small>
+        </label>
+        <label class="contact-field">
+          <span>Interested in</span>
+          <!-- Keep in sync with INTERESTS in lib/contact.js -->
+          <select name="interest">
+            <option value="">Choose one (optional)</option>
+            <option>Microsoft 365</option>
+            <option>Power Platform</option>
+            <option>SharePoint</option>
+            <option>Teams</option>
+            <option>Custom web solutions</option>
+            <option>Something else</option>
+          </select>
+        </label>
+        <label class="contact-field">
+          <span>Message</span>
+          <textarea name="message" rows="5" maxlength="5000" required></textarea>
+          <small class="contact-field-error" data-error-for="message"></small>
+        </label>
+        <label class="contact-honeypot" aria-hidden="true">
+          Website
+          <input type="text" name="website" tabindex="-1" autocomplete="off">
+        </label>
+      </div>
+      <p class="contact-status" id="contact-status" role="status" aria-live="polite"></p>
+      <div class="contact-actions">
+        <button type="submit" class="contact-submit" id="contact-submit">Send</button>
+      </div>
+    </form>
+    <div class="contact-done" id="contact-done" hidden>
+      <h2 class="contact-form-title">Thanks!</h2>
+      <p>Your message is on its way. I&rsquo;ll get back to you soon.</p>
+      <div class="contact-actions">
+        <button type="button" class="contact-submit" id="contact-done-close">Close</button>
+      </div>
+    </div>
+  </dialog>
   <p class="project-dev-note">This project site is under active development.</p>
+  <script src="/js/contact.js"></script>
   <script src="/js/landing.js"></script>
 </body>
 </html>
